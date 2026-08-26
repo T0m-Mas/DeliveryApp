@@ -35,6 +35,11 @@ import com.mrgndt.delivery.ui.screen.home.component.DeliveryMap
 import com.mrgndt.delivery.ui.screen.home.component.Drawer
 import kotlinx.coroutines.launch
 
+
+enum class Sheets {
+    Location, Route
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen() {
@@ -45,7 +50,13 @@ fun HomeScreen() {
 
     val sheetState = rememberModalBottomSheetState()
 
-    val mapCameraPositionState = rememberCameraPositionState()
+    val mapCameraPositionState = rememberCameraPositionState(
+//        init = {
+//            this.position = CameraPosition(
+//                target = LatLng()
+//            )
+//        }
+    )
 
     val scope = rememberCoroutineScope()
 
