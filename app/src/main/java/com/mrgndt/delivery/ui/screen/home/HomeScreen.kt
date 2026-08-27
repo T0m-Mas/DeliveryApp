@@ -35,11 +35,6 @@ import com.mrgndt.delivery.ui.screen.home.component.DeliveryMap
 import com.mrgndt.delivery.ui.screen.home.component.Drawer
 import kotlinx.coroutines.launch
 
-
-enum class Sheets {
-    Location, Route
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen() {
@@ -81,13 +76,13 @@ fun HomeScreen() {
                     },
                     onNewLocationClick = {
 
+                    },
+                    onBack = {
+                        scope.launch {
+                            drawerState.close()
+                        }
                     }
                 )
-                BackHandler {
-                    scope.launch {
-                        drawerState.close()
-                    }
-                }
             }
         ) {
             DeliveryMap(

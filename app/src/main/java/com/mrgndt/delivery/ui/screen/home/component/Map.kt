@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
@@ -19,7 +20,9 @@ import com.mrgndt.delivery.R
 
 @Composable
 fun DeliveryMap(
-    cameraPositionState: CameraPositionState
+    cameraPositionState: CameraPositionState,
+    onMapClick: ((LatLng) -> Unit)? = null,
+    onMapLongClick: ((LatLng) -> Unit)? = null,
 ) {
 
     val context = LocalContext.current
@@ -54,7 +57,9 @@ fun DeliveryMap(
                 context,
                 if (isDark) R.raw.map_dark else R.raw.map_light
             )
-        )
+        ),
+        onMapClick = onMapClick,
+        onMapLongClick = onMapLongClick,
 
     )
 }
