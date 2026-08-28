@@ -1,49 +1,49 @@
 package com.mrgndt.delivery.ui.screen.home
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.mrgndt.delivery.R
 import com.mrgndt.delivery.ui.screen.home.component.DeliveryMap
 import com.mrgndt.delivery.ui.screen.home.component.Drawer
+import com.mrgndt.delivery.ui.screen.home.component.LocationSheet
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(viewModel: HomeViewModel) {
 
     val drawerState = rememberDrawerState(
         initialValue = DrawerValue.Closed
     )
-
-    val sheetState = rememberModalBottomSheetState()
 
     val mapCameraPositionState = rememberCameraPositionState(
 //        init = {
@@ -55,39 +55,105 @@ fun HomeScreen() {
 
     val scope = rememberCoroutineScope()
 
-    var showSheet by remember { mutableStateOf(false) }
+    val state by viewModel.state.collectAsState()
+    val locationFormState by viewModel.locationFormState.collectAsState()
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        ModalNavigationDrawer(
-            drawerState = drawerState,
-            gesturesEnabled = false,
-            drawerContent = {
-                Drawer(
-                    onStartRouteClick = {
-                        scope.launch {
-                            drawerState.close()
-                            showSheet = true
-                            sheetState.show()
-                        }
-                    },
-                    onNewLocationClick = {
+    val statusBarPaddingValues = WindowInsets.statusBars.asPaddingValues()
+    val navigationBarPaddingValues = WindowInsets.navigationBars.asPaddingValues()
 
-                    },
-                    onBack = {
-                        scope.launch {
-                            drawerState.close()
-                        }
-                    }
+    fun updateMapCamera(target: LatLng, zoom: Float, tilt: Float = 0f, bearing: Float = 0f) {
+        val cameraUpdate = CameraUpdateFactory
+            .newCameraPosition(
+                CameraPosition(
+                    target,
+                    zoom,
+                    tilt,
+                    bearing
+                )
+            )
+        scope.launch {
+            mapCameraPositionState.animate(
+                cameraUpdate
+            )
+        }
+    }
+
+    fun handleMapClick(latLng: LatLng) {
+        when (state.mode) {
+            HomeUiState.Mode.Idled -> {
+                viewModel.updateMode(HomeUiState.Mode.NewLocation)
+                viewModel.updateLocationFormState(
+                    LocationFormState(latLng = latLng)
+                )
+                updateMapCamera(
+                    latLng,
+                    if (mapCameraPositionState.position.zoom >= 16f)
+                        mapCameraPositionState.position.zoom else 16f
+                )
+
+            }
+
+            HomeUiState.Mode.NewLocation -> {
+                viewModel.updateLocationFormState(
+                    LocationFormState(latLng = latLng)
+                )
+                updateMapCamera(
+                    latLng,
+                    if (mapCameraPositionState.position.zoom >= 16f)
+                        mapCameraPositionState.position.zoom else 16f
                 )
             }
+
+            HomeUiState.Mode.NewRoute -> Unit
+            HomeUiState.Mode.Route -> Unit
+        }
+    }
+
+    fun handleMapLongClick(latLng: LatLng) {
+
+    }
+
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        gesturesEnabled = false,
+        drawerContent = {
+            Drawer(
+                onStartRouteClick = {
+                    scope.launch {
+                        drawerState.close()
+                    }
+                },
+                onNewLocationClick = {
+                    scope.launch {
+                        drawerState.close()
+                        viewModel.updateMode(HomeUiState.Mode.NewLocation)
+                    }
+                },
+                onBack = {
+                    scope.launch {
+                        drawerState.close()
+                    }
+                }
+            )
+        }
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .imePadding()
         ) {
             DeliveryMap(
-                cameraPositionState = mapCameraPositionState
+                cameraPositionState = mapCameraPositionState,
+                onMapClick = ::handleMapClick,
+                onMapLongClick = ::handleMapLongClick,
+                contentPadding = PaddingValues(
+                    top = statusBarPaddingValues.calculateTopPadding(),
+                    bottom = if (state.mode == HomeUiState.Mode.NewLocation) 400.dp
+                    else navigationBarPaddingValues.calculateBottomPadding()
+                )
             )
+
             FloatingActionButton(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -104,23 +170,20 @@ fun HomeScreen() {
                     contentDescription = "Menu"
                 )
             }
-            AnimatedVisibility(showSheet) {
-                ModalBottomSheet(
-                    sheetState = sheetState,
-                    onDismissRequest = {
-                        showSheet = false
-                    }
-                ) {
-                    Column(
-                        modifier = Modifier.height(400.dp)
-                    ) {
-                        Text(
-                            text = "Sheet",
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                }
+
+            AnimatedVisibility(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                visible = state.mode == HomeUiState.Mode.NewLocation,
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it })
+            ) {
+                LocationSheet(
+                    locationFormState = locationFormState,
+                    updateState = { viewModel.updateLocationFormState(it) },
+                    onDismissRequest = { viewModel.updateMode(HomeUiState.Mode.Idled) }
+                )
             }
         }
     }
+
 }
