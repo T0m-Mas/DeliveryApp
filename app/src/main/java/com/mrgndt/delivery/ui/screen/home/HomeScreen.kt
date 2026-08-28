@@ -1,5 +1,11 @@
 package com.mrgndt.delivery.ui.screen.home
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.location.Location
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -20,23 +26,34 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.tasks.CancellationTokenSource
+import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberUpdatedMarkerState
 import com.mrgndt.delivery.R
 import com.mrgndt.delivery.ui.screen.home.component.DeliveryMap
 import com.mrgndt.delivery.ui.screen.home.component.Drawer
 import com.mrgndt.delivery.ui.screen.home.component.LocationSheet
 import kotlinx.coroutines.launch
 
+@SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: HomeViewModel) {
@@ -45,13 +62,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
         initialValue = DrawerValue.Closed
     )
 
-    val mapCameraPositionState = rememberCameraPositionState(
-//        init = {
-//            this.position = CameraPosition(
-//                target = LatLng()
-//            )
-//        }
-    )
+    val mapCameraPositionState = rememberCameraPositionState()
 
     val scope = rememberCoroutineScope()
 
@@ -60,6 +71,14 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
     val statusBarPaddingValues = WindowInsets.statusBars.asPaddingValues()
     val navigationBarPaddingValues = WindowInsets.navigationBars.asPaddingValues()
+
+    val context = LocalContext.current
+
+    val fusedLocationClient = remember {
+        LocationServices.getFusedLocationProviderClient(context)
+    }
+
+    var locationPermissionsEnabled by remember { mutableStateOf(false) }
 
     fun updateMapCamera(target: LatLng, zoom: Float, tilt: Float = 0f, bearing: Float = 0f) {
         val cameraUpdate = CameraUpdateFactory
@@ -77,6 +96,35 @@ fun HomeScreen(viewModel: HomeViewModel) {
             )
         }
     }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val isGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+
+        if (isGranted) {
+            locationPermissionsEnabled = true
+            val cancellationTokenSource = CancellationTokenSource()
+            fusedLocationClient.getCurrentLocation(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                cancellationTokenSource.token
+            ).addOnSuccessListener { location: Location? ->
+                if (location != null) {
+                    updateMapCamera(
+                        target = LatLng(location.latitude, location.longitude),
+                        zoom = 12f
+                    )
+                }
+            }.addOnFailureListener { exception ->
+                Toast.makeText(context, "${exception.message}", Toast.LENGTH_SHORT).show()
+
+            }
+        } else {
+            locationPermissionsEnabled = false
+        }
+    }
+
 
     fun handleMapClick(latLng: LatLng) {
         when (state.mode) {
@@ -111,6 +159,16 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
     fun handleMapLongClick(latLng: LatLng) {
 
+    }
+
+
+    LaunchedEffect(Unit) {
+        locationPermissionLauncher.launch(
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        )
     }
 
 
@@ -151,8 +209,15 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     top = statusBarPaddingValues.calculateTopPadding(),
                     bottom = if (state.mode == HomeUiState.Mode.NewLocation) 400.dp
                     else navigationBarPaddingValues.calculateBottomPadding()
-                )
-            )
+                ),
+                isMyLocationEnabled = locationPermissionsEnabled
+            ) {
+                if (locationFormState.latLng != null) {
+                    Marker(
+                        state = rememberUpdatedMarkerState(position = locationFormState.latLng!!)
+                    )
+                }
+            }
 
             FloatingActionButton(
                 modifier = Modifier

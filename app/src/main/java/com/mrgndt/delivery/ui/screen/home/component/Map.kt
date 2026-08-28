@@ -6,12 +6,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.google.android.gms.maps.GoogleMapOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.DefaultMapContentPadding
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.GoogleMapComposable
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.mrgndt.delivery.R
@@ -22,10 +22,11 @@ fun DeliveryMap(
     onMapClick: ((LatLng) -> Unit)? = null,
     onMapLongClick: ((LatLng) -> Unit)? = null,
     contentPadding: PaddingValues = DefaultMapContentPadding,
+    isMyLocationEnabled: Boolean = false,
+    content: @Composable @GoogleMapComposable () -> Unit,
 ) {
 
     val context = LocalContext.current
-
 
     val isDark = isSystemInDarkTheme()
 
@@ -33,11 +34,6 @@ fun DeliveryMap(
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
-        googleMapOptionsFactory = {
-            GoogleMapOptions(
-
-            )
-        },
         uiSettings = MapUiSettings(
             compassEnabled = false,
             indoorLevelPickerEnabled = false,
@@ -55,10 +51,12 @@ fun DeliveryMap(
             mapStyleOptions = MapStyleOptions.loadRawResourceStyle(
                 context,
                 if (isDark) R.raw.map_dark else R.raw.map_light
-            )
+            ),
+            isMyLocationEnabled = isMyLocationEnabled
         ),
         onMapClick = onMapClick,
         onMapLongClick = onMapLongClick,
-
-        )
+    ) {
+        content()
+    }
 }

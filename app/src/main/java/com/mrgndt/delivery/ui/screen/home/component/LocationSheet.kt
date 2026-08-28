@@ -44,6 +44,11 @@ fun LocationSheet(
     onDismissRequest: () -> Unit,
 ) {
 
+    fun resetFormAndDismiss() {
+        updateState(LocationFormState())
+        onDismissRequest()
+    }
+
     Column(
         modifier = modifier
             .background(
@@ -54,8 +59,7 @@ fun LocationSheet(
             .navigationBarsPadding()
 
             .padding(top = 8.dp)
-            .padding(16.dp)
-        ,
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
 
         ) {
@@ -71,7 +75,9 @@ fun LocationSheet(
                 fontWeight = FontWeight.W600
             )
             Icon(
-                modifier = Modifier.size(32.dp).clickable{ onDismissRequest() },
+                modifier = Modifier
+                    .size(32.dp)
+                    .clickable { resetFormAndDismiss() },
                 painter = painterResource(R.drawable.ic_close),
                 contentDescription = "Cerrar",
                 tint = MaterialTheme.colorScheme.onBackground
@@ -136,7 +142,7 @@ fun LocationSheet(
             }
         }
         BackHandler {
-            onDismissRequest()
+            resetFormAndDismiss()
         }
     }
 

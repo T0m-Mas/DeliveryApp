@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    kotlin("plugin.serialization") version "1.4.21"
 }
 
 android {
@@ -61,6 +62,19 @@ dependencies {
 
     // Google Maps
     implementation(libs.maps.compose)
+    // Location
+    implementation(libs.play.services.location)
+
+    //Retrofit
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+
+    // Retrofit with Scalar Converter
+    implementation(libs.retrofit2.kotlinx.serialization.converter)
+
+    // Coil
+    implementation(libs.coil.compose)
+    implementation(libs.kotlinx.serialization.json)
 
 
     // test
