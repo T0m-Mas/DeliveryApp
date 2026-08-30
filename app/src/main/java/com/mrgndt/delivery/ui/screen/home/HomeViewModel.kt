@@ -1,5 +1,6 @@
 package com.mrgndt.delivery.ui.screen.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -51,8 +52,20 @@ class HomeViewModel(
         viewModelScope.launch {
             try {
                 val response = placesService.autocomplete(search)
-            } catch (e: Exception) {
 
+                _locationFormState.update {
+                    it.copy(
+                        addressSuggestions = response.suggestions.map { suggestion ->
+                            LocationFormState.AddressSuggestions(
+                                label = suggestion.placePrediction.text.text,
+                                placeId = suggestion.placePrediction.placeId
+                            )
+                        }
+                    )
+                }
+
+            } catch (e: Exception) {
+                Log.d("processAutoComplete", "$e")
             }
         }
     }

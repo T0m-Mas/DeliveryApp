@@ -5,6 +5,7 @@ import com.mrgndt.delivery.network.data.AutoCompleteResponse
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
 import retrofit2.http.POST
 
 
@@ -19,7 +20,7 @@ class PlacesService(
         .addInterceptor(headerInterceptor)
         .build()
 
-    private val apiUrl = "https://places.googleapis.com/v1/places"
+    private val apiUrl = "https://places.googleapis.com/"
 
     private val retrofit = Retrofit.Builder()
         .addConverterFactory(GsonConverterFactory.create())
@@ -62,8 +63,8 @@ class PlacesService(
 }
 
 interface ApiServiceInterfaceInterface {
-    @POST("places:autocomplete")
-    suspend fun autocomplete(body: AutoCompleteBody): AutoCompleteResponse
+    @POST("v1/places:autocomplete")
+    suspend fun autocomplete(@Body body: AutoCompleteBody): AutoCompleteResponse
 
 //    @GET("details/json")
 //    suspend fun placeDetails(

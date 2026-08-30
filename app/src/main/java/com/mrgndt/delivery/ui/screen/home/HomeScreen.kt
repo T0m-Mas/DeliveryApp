@@ -245,7 +245,8 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 LocationSheet(
                     locationFormState = locationFormState,
                     updateState = { viewModel.updateLocationFormState(it) },
-                    onDismissRequest = { viewModel.updateMode(HomeUiState.Mode.Idled) }
+                    onDismissRequest = { viewModel.updateMode(HomeUiState.Mode.Idled) },
+                    processAutoComplete = { viewModel.processAutoComplete(it) }
                 )
             }
         }

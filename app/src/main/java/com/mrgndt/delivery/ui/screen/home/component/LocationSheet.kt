@@ -31,6 +31,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mrgndt.delivery.R
+import com.mrgndt.delivery.ui.component.DeliveryAppAutoCompleteTextField
+import com.mrgndt.delivery.ui.component.SelectorItem
 import com.mrgndt.delivery.ui.component.SquareButton
 import com.mrgndt.delivery.ui.screen.home.LocationFormState
 import com.mrgndt.delivery.ui.theme.DeliveryAppTheme
@@ -41,6 +43,7 @@ fun LocationSheet(
     modifier: Modifier = Modifier,
     locationFormState: LocationFormState,
     updateState: (LocationFormState) -> Unit,
+    processAutoComplete: (String) -> Unit,
     onDismissRequest: () -> Unit,
 ) {
 
@@ -84,8 +87,7 @@ fun LocationSheet(
             )
         }
         if(locationFormState.latLng == null){
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
+            DeliveryAppAutoCompleteTextField(
                 value = locationFormState.address,
                 onValueChange = {
                     updateState(
@@ -93,9 +95,16 @@ fun LocationSheet(
                             address = it
                         )
                     )
+                    processAutoComplete(it)
                 },
-                label = { Text("Ingrese una dirección o toque el mapa") },
-//                placeholder = { Text("Ingrese una dirección") }
+                label = "Ingrese una dirección o toque el mapa",
+                placeholder = "Buscar por dirección",
+                list = locationFormState.addressSuggestions.map {
+                    suggestions -> SelectorItem(label = suggestions.label, value = suggestions.placeId)
+                },
+                onValueSelected = {
+
+                }
             )
         }else {
             OutlinedTextField(
@@ -179,6 +188,7 @@ fun LocationSheetPreview() {
                 locationFormState = LocationFormState(),
                 updateState = {},
                 onDismissRequest = {},
+                processAutoComplete = {}
             )
         }
     }
