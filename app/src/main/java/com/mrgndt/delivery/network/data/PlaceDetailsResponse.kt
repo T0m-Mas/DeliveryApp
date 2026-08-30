@@ -1,4 +1,4 @@
-package com.adox.worktrack.network.service.places.api.data
+package com.mrgndt.delivery.network.data
 
 import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.Serializable

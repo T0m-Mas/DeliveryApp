@@ -9,7 +9,7 @@ data class HomeUiState(
     val route: Route? = null,
     val selectedLocations: List<Location> = emptyList()
 
-){
+) {
     enum class Mode {
         NewRoute,
         NewLocation,
@@ -19,8 +19,15 @@ data class HomeUiState(
 }
 
 data class LocationFormState(
-    val label:String = "",
+    val label: String = "",
     val address: String = "",
     val latLng: LatLng? = null,
     val isEditing: Boolean = false,
-)
+    val canSave: Boolean = false,
+    val addressSuggestions: List<AddressSuggestions> = emptyList()
+) {
+    data class AddressSuggestions(
+        val label: String,
+        val placeId: String
+    )
+}

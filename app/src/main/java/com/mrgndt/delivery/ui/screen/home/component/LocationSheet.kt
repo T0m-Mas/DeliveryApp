@@ -83,32 +83,48 @@ fun LocationSheet(
                 tint = MaterialTheme.colorScheme.onBackground
             )
         }
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = locationFormState.label,
-            onValueChange = {
-                updateState(
-                    locationFormState.copy(
-                        label = it
+        if(locationFormState.latLng == null){
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = locationFormState.address,
+                onValueChange = {
+                    updateState(
+                        locationFormState.copy(
+                            address = it
+                        )
                     )
-                )
-            },
-            label = { Text("Nombre") },
-            placeholder = { Text("Sin Nombre") }
-        )
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = locationFormState.address,
-            onValueChange = {
-                updateState(
-                    locationFormState.copy(
-                        address = it
+                },
+                label = { Text("Ingrese una dirección o toque el mapa") },
+//                placeholder = { Text("Ingrese una dirección") }
+            )
+        }else {
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = locationFormState.label,
+                onValueChange = {
+                    updateState(
+                        locationFormState.copy(
+                            label = it
+                        )
                     )
-                )
-            },
-            label = { Text("Dirección") },
-            placeholder = { Text("Ingrese una dirección") }
-        )
+                },
+                label = { Text("Nombre") },
+                placeholder = { Text("Sin Nombre") }
+            )
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = locationFormState.address,
+                onValueChange = {
+                    updateState(
+                        locationFormState.copy(
+                            address = it
+                        )
+                    )
+                },
+                label = { Text("Dirección") },
+                placeholder = { Text("Ingrese una dirección") }
+            )
+        }
 
         Spacer(
             modifier = Modifier.weight(1f)
@@ -134,7 +150,8 @@ fun LocationSheet(
             }
             SquareButton(
                 modifier = Modifier.weight(1f),
-                onClick = {}
+                onClick = {},
+                enabled = locationFormState.canSave
             ) {
                 Text(
                     "Guardar"

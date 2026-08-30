@@ -9,7 +9,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-class GeoCodingService() {
+class GeoCodingService(
+    private val key: String
+) {
 
     private val client = OkHttpClient
         .Builder()
@@ -32,7 +34,10 @@ class GeoCodingService() {
         latLng: LatLng
     ): GeoCodingResponse? {
         return try {
-            retrofitService.getAddress(latlng = "${latLng.latitude},${latLng.longitude}")
+            retrofitService.getAddress(
+                key = key,
+                latlng = "${latLng.latitude},${latLng.longitude}"
+            )
         } catch (e: Exception) {
             Log.d("getAddressOfLatLng", "$e")
             null
@@ -44,7 +49,7 @@ class GeoCodingService() {
 interface GeoCodingServiceInterface {
     @GET("json")
     suspend fun getAddress(
-        @Query("key") key: String = "AIzaSyCo9HsAClcLXFaOAeWXRh5B82vic3pFwYw",
+        @Query("key") key: String,
         @Query("language") language: String? = "es-419",
         @Query("latlng") latlng: String,
 

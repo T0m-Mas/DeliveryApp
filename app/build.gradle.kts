@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     kotlin("plugin.serialization") version "1.4.21"
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin") version "2.0.1" apply false
+
 }
 
 android {
@@ -30,6 +32,13 @@ android {
         manifestPlaceholders["GOOGLE_MAPS_API_KEY"] =
             localProperties.getProperty("GOOGLE_MAPS_API_KEY")
                 ?: error("Falta GOOGLE_MAPS_API_KEY en local.properties")
+
+        // Expone la clave al código Kotlin mediante BuildConfig.
+        buildConfigField(
+            "String",
+            "GOOGLE_MAPS_API_KEY",
+            "\"${localProperties.getProperty("GOOGLE_MAPS_API_KEY")}\""
+        )
     }
 
     buildTypes {
@@ -45,6 +54,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
