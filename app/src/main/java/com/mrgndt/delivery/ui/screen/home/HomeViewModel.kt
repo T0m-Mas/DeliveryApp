@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.google.android.gms.maps.model.LatLng
 import com.mrgndt.delivery.DeliveryApplication
 import com.mrgndt.delivery.network.service.PlacesService
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,6 +47,7 @@ class HomeViewModel(
         _locationFormState.update {
             state
         }
+        validateLocationForm()
     }
 
     fun processAutoComplete(search: String) {
@@ -67,6 +69,33 @@ class HomeViewModel(
             } catch (e: Exception) {
                 Log.d("processAutoComplete", "$e")
             }
+        }
+    }
+
+    fun processSelectSuggestion(placeId: String) {
+        try {
+            viewModelScope.launch {
+                val response = placesService.getPlaceDetails(placeId)
+                _locationFormState.update {
+                    it.copy(
+                        latLng = LatLng(
+                            response.location.latitude,
+                            response.location.longitude,
+                        )
+                    )
+                }
+                validateLocationForm()
+            }
+        } catch (e: Exception) {
+            Log.d("processSelectSuggestion", "$e")
+        }
+    }
+
+    fun validateLocationForm() {
+        _locationFormState.update {
+            it.copy(
+                canSave = it.latLng != null && it.address.length >= 4
+            )
         }
     }
 

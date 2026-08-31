@@ -128,27 +128,11 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
     fun handleMapClick(latLng: LatLng) {
         when (state.mode) {
-            HomeUiState.Mode.Idled -> {
-                viewModel.updateMode(HomeUiState.Mode.NewLocation)
-                viewModel.updateLocationFormState(
-                    LocationFormState(latLng = latLng)
-                )
-                updateMapCamera(
-                    latLng,
-                    if (mapCameraPositionState.position.zoom >= 16f)
-                        mapCameraPositionState.position.zoom else 16f
-                )
-
-            }
+            HomeUiState.Mode.Idled -> Unit
 
             HomeUiState.Mode.NewLocation -> {
                 viewModel.updateLocationFormState(
                     LocationFormState(latLng = latLng)
-                )
-                updateMapCamera(
-                    latLng,
-                    if (mapCameraPositionState.position.zoom >= 16f)
-                        mapCameraPositionState.position.zoom else 16f
                 )
             }
 
@@ -158,7 +142,23 @@ fun HomeScreen(viewModel: HomeViewModel) {
     }
 
     fun handleMapLongClick(latLng: LatLng) {
+        when (state.mode) {
+            HomeUiState.Mode.Idled -> {
+                viewModel.updateMode(HomeUiState.Mode.NewLocation)
+                viewModel.updateLocationFormState(
+                    LocationFormState(latLng = latLng)
+                )
+            }
 
+            HomeUiState.Mode.NewLocation -> {
+                viewModel.updateLocationFormState(
+                    LocationFormState(latLng = latLng)
+                )
+            }
+
+            HomeUiState.Mode.NewRoute -> Unit
+            HomeUiState.Mode.Route -> Unit
+        }
     }
 
 
@@ -169,6 +169,16 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             )
         )
+    }
+
+    LaunchedEffect(locationFormState.latLng) {
+        if (locationFormState.latLng != null) {
+            updateMapCamera(
+                locationFormState.latLng!!,
+                if (mapCameraPositionState.position.zoom >= 16f)
+                    mapCameraPositionState.position.zoom else 16f
+            )
+        }
     }
 
 
@@ -207,7 +217,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 onMapLongClick = ::handleMapLongClick,
                 contentPadding = PaddingValues(
                     top = statusBarPaddingValues.calculateTopPadding(),
-                    bottom = if (state.mode == HomeUiState.Mode.NewLocation) 400.dp
+                    bottom = if (state.mode == HomeUiState.Mode.NewLocation) 600.dp
                     else navigationBarPaddingValues.calculateBottomPadding()
                 ),
                 isMyLocationEnabled = locationPermissionsEnabled
@@ -246,7 +256,8 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     locationFormState = locationFormState,
                     updateState = { viewModel.updateLocationFormState(it) },
                     onDismissRequest = { viewModel.updateMode(HomeUiState.Mode.Idled) },
-                    processAutoComplete = { viewModel.processAutoComplete(it) }
+                    processAutoComplete = { viewModel.processAutoComplete(it) },
+                    processSelectSuggestion = { viewModel.processSelectSuggestion(it) }
                 )
             }
         }

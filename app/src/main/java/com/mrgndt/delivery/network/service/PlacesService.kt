@@ -2,11 +2,15 @@ package com.mrgndt.delivery.network.service
 
 import com.mrgndt.delivery.network.data.AutoCompleteBody
 import com.mrgndt.delivery.network.data.AutoCompleteResponse
+import com.mrgndt.delivery.network.data.PlaceDetailsResponse
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 
 class PlacesService(
@@ -45,20 +49,13 @@ class PlacesService(
 
     }
 
-//    suspend fun getPlaceDetails(
-//        id: String,
-//    ): PlaceDetailsResponse? {
-//        return try {
-//            retrofitService.placeDetails(
-//                id = id,
-//                key = key,
-//            )
-//        } catch (e: Exception) {
-//            Log.e("PlacesApi", "$e")
-//            null
-//
-//        }
-//    }
+    suspend fun getPlaceDetails(
+        placeId: String,
+    ): PlaceDetailsResponse {
+        return retrofitService.placeDetails(
+            placeId = placeId
+        )
+    }
 
 }
 
@@ -66,11 +63,9 @@ interface ApiServiceInterfaceInterface {
     @POST("v1/places:autocomplete")
     suspend fun autocomplete(@Body body: AutoCompleteBody): AutoCompleteResponse
 
-//    @GET("details/json")
-//    suspend fun placeDetails(
-//        @Query("place_id") id: String,
-//        @Query("fields") fields: String = "formatted_address,name,geometry",
-//        @Query("key") key: String,
-//        @Query("language") language: String = "es",
-//    ): PlaceDetailsResponse
+    @GET("v1/places/{placeId}")
+    suspend fun placeDetails(
+        @Path("placeId") placeId: String,
+        @Query("fields") fields: String = "location"
+    ): PlaceDetailsResponse
 }

@@ -19,7 +19,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mrgndt.delivery.R
 import com.mrgndt.delivery.ui.component.DeliveryAppAutoCompleteTextField
+import com.mrgndt.delivery.ui.component.DeliveryAppTextField
 import com.mrgndt.delivery.ui.component.SelectorItem
 import com.mrgndt.delivery.ui.component.SquareButton
 import com.mrgndt.delivery.ui.screen.home.LocationFormState
@@ -45,6 +45,7 @@ fun LocationSheet(
     updateState: (LocationFormState) -> Unit,
     processAutoComplete: (String) -> Unit,
     onDismissRequest: () -> Unit,
+    processSelectSuggestion: (String) -> Unit,
 ) {
 
     fun resetFormAndDismiss() {
@@ -58,7 +59,7 @@ fun LocationSheet(
                 color = MaterialTheme.colorScheme.background,
                 shape = RoundedCornerShape(topStart = 30f, topEnd = 30f)
             )
-            .height(400.dp)
+            .height(600.dp)
             .navigationBarsPadding()
 
             .padding(top = 8.dp)
@@ -86,7 +87,7 @@ fun LocationSheet(
                 tint = MaterialTheme.colorScheme.onBackground
             )
         }
-        if(locationFormState.latLng == null){
+        if (locationFormState.latLng == null) {
             DeliveryAppAutoCompleteTextField(
                 value = locationFormState.address,
                 onValueChange = {
@@ -99,16 +100,17 @@ fun LocationSheet(
                 },
                 label = "Ingrese una dirección o toque el mapa",
                 placeholder = "Buscar por dirección",
-                list = locationFormState.addressSuggestions.map {
-                    suggestions -> SelectorItem(label = suggestions.label, value = suggestions.placeId)
+                list = locationFormState.addressSuggestions.map { suggestions ->
+                    SelectorItem(label = suggestions.label, value = suggestions.placeId)
                 },
-                onValueSelected = {
+                singleLine = false,
 
+                onValueSelected = {
+                    processSelectSuggestion(it)
                 }
             )
-        }else {
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
+        } else {
+            DeliveryAppTextField(
                 value = locationFormState.label,
                 onValueChange = {
                     updateState(
@@ -117,11 +119,10 @@ fun LocationSheet(
                         )
                     )
                 },
-                label = { Text("Nombre") },
-                placeholder = { Text("Sin Nombre") }
+                label = "Nombre",
+                placeholder = "Sin Nombre"
             )
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
+            DeliveryAppTextField(
                 value = locationFormState.address,
                 onValueChange = {
                     updateState(
@@ -130,8 +131,9 @@ fun LocationSheet(
                         )
                     )
                 },
-                label = { Text("Dirección") },
-                placeholder = { Text("Ingrese una dirección") }
+                singleLine = false,
+                label = "Dirección",
+                placeholder = "Ingrese una dirección"
             )
         }
 
@@ -188,7 +190,8 @@ fun LocationSheetPreview() {
                 locationFormState = LocationFormState(),
                 updateState = {},
                 onDismissRequest = {},
-                processAutoComplete = {}
+                processAutoComplete = {},
+                processSelectSuggestion = {}
             )
         }
     }
