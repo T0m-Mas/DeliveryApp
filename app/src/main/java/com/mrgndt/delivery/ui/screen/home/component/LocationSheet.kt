@@ -1,19 +1,30 @@
 package com.mrgndt.delivery.ui.screen.home.component
 
+import android.content.res.Configuration.ORIENTATION_LANDSCAPE
+import android.view.View.LAYOUT_DIRECTION_RTL
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,9 +35,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mrgndt.delivery.R
@@ -46,7 +60,7 @@ fun LocationSheet(
     processAutoComplete: (String) -> Unit,
     onDismissRequest: () -> Unit,
     processSelectSuggestion: (String) -> Unit,
-    saveLocation: ()-> Unit,
+    saveLocation: () -> Unit,
     deleteLocation: () -> Unit,
 ) {
 
@@ -55,14 +69,37 @@ fun LocationSheet(
         onDismissRequest()
     }
 
+    val config = LocalConfiguration.current
+    val isLandscape = config.orientation == ORIENTATION_LANDSCAPE
+    val windowInsets = WindowInsets.safeDrawing.asPaddingValues()
+    val layoutDirection = if (config.layoutDirection == LAYOUT_DIRECTION_RTL)
+        LayoutDirection.Rtl else LayoutDirection.Ltr
+
+
     Column(
         modifier = modifier
             .background(
                 color = MaterialTheme.colorScheme.background,
-                shape = RoundedCornerShape(topStart = 30f, topEnd = 30f)
+                shape = if (isLandscape) RoundedCornerShape(
+                    topEnd = 30f,
+                    bottomEnd = 30f
+                ) else RoundedCornerShape(topStart = 30f, topEnd = 30f)
             )
             .height(500.dp)
-            .navigationBarsPadding()
+            .widthIn(
+                max = if (isLandscape) 500.dp else Dp.Unspecified
+            )
+            .then(
+                if (isLandscape)
+                    Modifier
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
+                        .padding(start = windowInsets.calculateStartPadding(layoutDirection))
+                        .scrollable(rememberScrollState(), Orientation.Vertical)
+                else
+                    Modifier.navigationBarsPadding()
+            )
+
             .padding(top = 8.dp)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -193,8 +230,8 @@ fun LocationSheetPreview() {
                 onDismissRequest = {},
                 processAutoComplete = {},
                 processSelectSuggestion = {},
-                saveLocation={},
-                deleteLocation={}
+                saveLocation = {},
+                deleteLocation = {}
             )
         }
     }

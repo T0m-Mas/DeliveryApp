@@ -2,7 +2,9 @@ package com.mrgndt.delivery.ui.screen.home
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.location.Location
+import android.view.View.LAYOUT_DIRECTION_LTR
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -13,12 +15,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -36,8 +40,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -72,6 +78,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
     val statusBarPaddingValues = WindowInsets.statusBars.asPaddingValues()
     val navigationBarPaddingValues = WindowInsets.navigationBars.asPaddingValues()
+    val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
 
     val context = LocalContext.current
 
@@ -183,6 +190,33 @@ fun HomeScreen(viewModel: HomeViewModel) {
     }
 
 
+    val config = LocalConfiguration.current
+    val isLandscape = config.orientation == ORIENTATION_LANDSCAPE
+    val layoutDirection = config.layoutDirection
+
+    fun determinePaddingValuesForMap(): PaddingValues {
+        return if (isLandscape) {
+            PaddingValues(
+                top = statusBarPaddingValues.calculateTopPadding(),
+                bottom = navigationBarPaddingValues.calculateBottomPadding(),
+                start = if (state.mode == HomeUiState.Mode.NewLocation) 500.dp
+                else safeDrawing.calculateStartPadding(
+                    if (layoutDirection == LAYOUT_DIRECTION_LTR)
+                        LayoutDirection.Ltr else LayoutDirection.Rtl
+                ) + 16.dp,
+                end = 16.dp
+            )
+        } else {
+            PaddingValues(
+                top = statusBarPaddingValues.calculateTopPadding(),
+                bottom = if (state.mode == HomeUiState.Mode.NewLocation) 500.dp
+                else navigationBarPaddingValues.calculateBottomPadding(),
+                start = 16.dp,
+                end = 16.dp
+            )
+        }
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = false,
@@ -216,11 +250,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 cameraPositionState = mapCameraPositionState,
                 onMapClick = ::handleMapClick,
                 onMapLongClick = ::handleMapLongClick,
-                contentPadding = PaddingValues(
-                    top = statusBarPaddingValues.calculateTopPadding(),
-                    bottom = if (state.mode == HomeUiState.Mode.NewLocation) 500.dp
-                    else navigationBarPaddingValues.calculateBottomPadding()
-                ),
+                contentPadding = determinePaddingValuesForMap(),
                 isMyLocationEnabled = locationPermissionsEnabled
             ) {
                 if (locationFormState.latLng != null) {
@@ -246,7 +276,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
             FloatingActionButton(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .statusBarsPadding()
+                    .safeDrawingPadding()
                     .padding(16.dp),
                 onClick = {
                     scope.launch {
@@ -261,7 +291,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
             }
 
             AnimatedVisibility(
-                modifier = Modifier.align(Alignment.BottomCenter),
+                modifier = Modifier.align(Alignment.BottomStart),
                 visible = state.mode == HomeUiState.Mode.NewLocation,
                 enter = slideInVertically(initialOffsetY = { it }),
                 exit = slideOutVertically(targetOffsetY = { it })
