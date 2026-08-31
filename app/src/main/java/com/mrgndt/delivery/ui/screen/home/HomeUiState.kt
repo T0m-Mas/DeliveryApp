@@ -2,14 +2,11 @@ package com.mrgndt.delivery.ui.screen.home
 
 import com.google.android.gms.maps.model.LatLng
 import com.mrgndt.delivery.model.Location
-import com.mrgndt.delivery.model.Route
 
 data class HomeUiState(
     val mode: Mode = Mode.Idled,
-    val route: Route? = null,
-    val selectedLocations: List<Location> = emptyList(),
-    val locations: List<Location> = emptyList()
-
+    val locations: List<Location> = emptyList(),
+    val selectedLocation: Location? = null,
 ) {
     enum class Mode {
         NewRoute,

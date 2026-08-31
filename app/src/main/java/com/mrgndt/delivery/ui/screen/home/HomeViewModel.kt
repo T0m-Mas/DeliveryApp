@@ -173,4 +173,12 @@ class HomeViewModel(
         }
     }
 
+    fun setSelectedLocation(location: Location?) {
+        _state.update {
+            it.copy(
+                selectedLocation = location
+            )
+        }
+    }
+
 }

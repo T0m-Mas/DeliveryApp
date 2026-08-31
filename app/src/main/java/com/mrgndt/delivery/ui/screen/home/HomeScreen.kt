@@ -12,6 +12,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -28,6 +29,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,6 +59,7 @@ import com.google.maps.android.compose.rememberUpdatedMarkerState
 import com.mrgndt.delivery.R
 import com.mrgndt.delivery.ui.screen.home.component.DeliveryMap
 import com.mrgndt.delivery.ui.screen.home.component.Drawer
+import com.mrgndt.delivery.ui.screen.home.component.LocationInfoCard
 import com.mrgndt.delivery.ui.screen.home.component.LocationSheet
 import kotlinx.coroutines.launch
 
@@ -169,6 +172,12 @@ fun HomeScreen(viewModel: HomeViewModel) {
         }
     }
 
+    fun handleLocationMarkerClick(location: com.mrgndt.delivery.model.Location) {
+        if (state.mode == HomeUiState.Mode.Idled) {
+            viewModel.setSelectedLocation(location)
+        }
+    }
+
 
     LaunchedEffect(Unit) {
         locationPermissionLauncher.launch(
@@ -217,6 +226,12 @@ fun HomeScreen(viewModel: HomeViewModel) {
         }
     }
 
+    fun shouldShowMenuButton(): Boolean {
+        if (state.selectedLocation !== null) return false
+        if (state.mode == HomeUiState.Mode.Idled) return true
+        return false
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = false,
@@ -225,6 +240,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 onStartRouteClick = {
                     scope.launch {
                         drawerState.close()
+                        viewModel.updateMode(HomeUiState.Mode.NewRoute)
                     }
                 },
                 onNewLocationClick = {
@@ -266,30 +282,53 @@ fun HomeScreen(viewModel: HomeViewModel) {
                                 position = LatLng(location.latitude, location.longitude)
                             ),
                             title = location.label ?: location.address,
-                            snippet = location.address
+                            snippet = location.address,
+                            onClick = {
+                                handleLocationMarkerClick(location)
+                                false
+                            }
                         )
                     }
                 }
 
             }
 
-            FloatingActionButton(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .safeDrawingPadding()
-                    .padding(16.dp),
-                onClick = {
-                    scope.launch {
-                        drawerState.open()
+            AnimatedVisibility(shouldShowMenuButton()) {
+                FloatingActionButton(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .safeDrawingPadding()
+                        .padding(16.dp),
+                    onClick = {
+                        scope.launch {
+                            drawerState.open()
+                        }
                     }
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_menu),
+                        contentDescription = "Menu"
+                    )
                 }
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_menu),
-                    contentDescription = "Menu"
+            }
+            // ==================================================
+            // ==================================================
+            // LOCATION SELECTED PSEUDO MODE
+            // ==================================================
+            // ==================================================
+            if(state.selectedLocation != null){
+                LocationInfoCard(
+                    location = state.selectedLocation!!
                 )
             }
 
+
+
+            // ==================================================
+            // ==================================================
+            // NEW LOCATION MODE
+            // ==================================================
+            // ==================================================
             AnimatedVisibility(
                 modifier = Modifier.align(Alignment.BottomStart),
                 visible = state.mode == HomeUiState.Mode.NewLocation,
