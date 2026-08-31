@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun DeliveryAppTextField(
+    modifier: Modifier = Modifier,
     value: String = "",
     placeholder: String? = null,
     label: String? = null,
@@ -119,9 +120,10 @@ fun DeliveryAppTextField(
                     )
                     .fillMaxWidth()
                     .padding(
-                        vertical = 12.dp,
+                        vertical = 16.dp,
                         horizontal = 8.dp,
                     )
+                    .then(modifier)
             ) {
                 if (value.isEmpty() && placeholder != null && !isFocus) {
                     Text(

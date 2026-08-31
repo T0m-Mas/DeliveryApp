@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -217,7 +218,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 onMapLongClick = ::handleMapLongClick,
                 contentPadding = PaddingValues(
                     top = statusBarPaddingValues.calculateTopPadding(),
-                    bottom = if (state.mode == HomeUiState.Mode.NewLocation) 600.dp
+                    bottom = if (state.mode == HomeUiState.Mode.NewLocation) 500.dp
                     else navigationBarPaddingValues.calculateBottomPadding()
                 ),
                 isMyLocationEnabled = locationPermissionsEnabled
@@ -227,6 +228,19 @@ fun HomeScreen(viewModel: HomeViewModel) {
                         state = rememberUpdatedMarkerState(position = locationFormState.latLng!!)
                     )
                 }
+
+                state.locations.forEach { location ->
+                    key(location.id) {
+                        Marker(
+                            state = rememberUpdatedMarkerState(
+                                position = LatLng(location.latitude, location.longitude)
+                            ),
+                            title = location.label ?: location.address,
+                            snippet = location.address
+                        )
+                    }
+                }
+
             }
 
             FloatingActionButton(
@@ -257,7 +271,9 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     updateState = { viewModel.updateLocationFormState(it) },
                     onDismissRequest = { viewModel.updateMode(HomeUiState.Mode.Idled) },
                     processAutoComplete = { viewModel.processAutoComplete(it) },
-                    processSelectSuggestion = { viewModel.processSelectSuggestion(it) }
+                    processSelectSuggestion = { viewModel.processSelectSuggestion(it) },
+                    saveLocation = { viewModel.saveLocation() },
+                    deleteLocation = {}
                 )
             }
         }

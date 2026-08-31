@@ -1,7 +1,7 @@
 package com.mrgndt.delivery.model
 
 data class Location(
-    val id:Int,
+    val id: Long = 0L,
     val latitude: Double,
     val longitude: Double,
     val address: String,

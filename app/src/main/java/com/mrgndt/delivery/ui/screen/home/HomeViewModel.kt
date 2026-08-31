@@ -8,6 +8,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.google.android.gms.maps.model.LatLng
 import com.mrgndt.delivery.DeliveryApplication
+import com.mrgndt.delivery.data.MainRepository
+import com.mrgndt.delivery.model.Location
 import com.mrgndt.delivery.network.service.PlacesService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +17,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
-    private val placesService: PlacesService
+    private val placesService: PlacesService,
+    private val mainRepository: MainRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(HomeUiState())
     val state = _state.asStateFlow()
@@ -23,13 +26,26 @@ class HomeViewModel(
     private val _locationFormState = MutableStateFlow(LocationFormState())
     val locationFormState = _locationFormState.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    locations = mainRepository.getAllLocations()
+                )
+            }
+
+        }
+
+    }
+
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application =
                     (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as DeliveryApplication)
                 HomeViewModel(
-                    placesService = application.placesService
+                    placesService = application.placesService,
+                    mainRepository = application.mainRepository
                 )
             }
         }
@@ -73,8 +89,8 @@ class HomeViewModel(
     }
 
     fun processSelectSuggestion(placeId: String) {
-        try {
-            viewModelScope.launch {
+        viewModelScope.launch {
+            try {
                 val response = placesService.getPlaceDetails(placeId)
                 _locationFormState.update {
                     it.copy(
@@ -85,17 +101,75 @@ class HomeViewModel(
                     )
                 }
                 validateLocationForm()
+            } catch (e: Exception) {
+                Log.d("processSelectSuggestion", "$e")
             }
-        } catch (e: Exception) {
-            Log.d("processSelectSuggestion", "$e")
         }
+    }
+
+    private fun canSave(): Boolean {
+        return _locationFormState.value.latLng != null && _locationFormState.value.address.length >= 4
     }
 
     fun validateLocationForm() {
         _locationFormState.update {
             it.copy(
-                canSave = it.latLng != null && it.address.length >= 4
+                canSave = canSave()
             )
+        }
+    }
+
+    fun saveLocation() {
+
+
+        if (canSave()) {
+
+
+            var location = Location(
+                latitude = _locationFormState.value.latLng!!.latitude,
+                longitude = _locationFormState.value.latLng!!.longitude,
+                label = _locationFormState.value.label,
+                address = _locationFormState.value.address,
+            )
+
+            if (_locationFormState.value.isEditing) {
+                viewModelScope.launch {
+//                    mainRepository.updateLocation(
+//                        Location(
+//                            latitude = _locationFormState.value.latLng!!.latitude,
+//                            longitude = _locationFormState.value.latLng!!.longitude,
+//                            label = _locationFormState.value.label,
+//                            address = _locationFormState.value.address,
+//                        )
+//                    )
+                }
+            } else {
+                viewModelScope.launch {
+                    try {
+                        val newLocationId = mainRepository.saveLocation(location)
+
+                        location = Location(
+                            id = newLocationId,
+                            latitude = _locationFormState.value.latLng!!.latitude,
+                            longitude = _locationFormState.value.latLng!!.longitude,
+                            label = _locationFormState.value.label,
+                            address = _locationFormState.value.address,
+                        )
+
+                        _locationFormState.update { LocationFormState() }
+                        _state.update {
+                            it.copy(
+                                mode = HomeUiState.Mode.Idled,
+                                locations = it.locations.plus(location)
+                            )
+                        }
+                    } catch (e: Exception) {
+                        Log.d("saveLocation", "$e")
+                    }
+                }
+
+            }
+
         }
     }
 

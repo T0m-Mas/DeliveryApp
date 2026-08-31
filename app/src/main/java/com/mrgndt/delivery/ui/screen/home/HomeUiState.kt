@@ -7,7 +7,8 @@ import com.mrgndt.delivery.model.Route
 data class HomeUiState(
     val mode: Mode = Mode.Idled,
     val route: Route? = null,
-    val selectedLocations: List<Location> = emptyList()
+    val selectedLocations: List<Location> = emptyList(),
+    val locations: List<Location> = emptyList()
 
 ) {
     enum class Mode {
@@ -19,6 +20,7 @@ data class HomeUiState(
 }
 
 data class LocationFormState(
+    val id: Int? = null,
     val label: String = "",
     val address: String = "",
     val latLng: LatLng? = null,
