@@ -10,14 +10,14 @@ data class HomeUiState(
 ) {
     enum class Mode {
         NewRoute,
-        NewLocation,
+        LocationForm,
         Route,
         Idled
     }
 }
 
 data class LocationFormState(
-    val id: Int? = null,
+    val id: Long? = null,
     val label: String = "",
     val address: String = "",
     val latLng: LatLng? = null,

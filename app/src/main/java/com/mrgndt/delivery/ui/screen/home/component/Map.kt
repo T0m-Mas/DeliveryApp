@@ -23,6 +23,7 @@ fun DeliveryMap(
     onMapLongClick: ((LatLng) -> Unit)? = null,
     contentPadding: PaddingValues = DefaultMapContentPadding,
     isMyLocationEnabled: Boolean = false,
+    gestureEnabled: Boolean = true,
     content: @Composable @GoogleMapComposable () -> Unit,
 ) {
 
@@ -40,11 +41,11 @@ fun DeliveryMap(
             mapToolbarEnabled = false,
             myLocationButtonEnabled = false,
             rotationGesturesEnabled = false,
-            scrollGesturesEnabled = true,
-            scrollGesturesEnabledDuringRotateOrZoom = true,
+            scrollGesturesEnabled = gestureEnabled,
+            scrollGesturesEnabledDuringRotateOrZoom = gestureEnabled,
             tiltGesturesEnabled = false,
             zoomControlsEnabled = false,
-            zoomGesturesEnabled = true
+            zoomGesturesEnabled = gestureEnabled
         ),
         contentPadding = contentPadding,
         properties = MapProperties(

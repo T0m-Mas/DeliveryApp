@@ -66,6 +66,15 @@ class HomeViewModel(
         validateLocationForm()
     }
 
+    fun updateLocationFormLatLng(latLng: LatLng) {
+        _locationFormState.update {
+            it.copy(
+                latLng = latLng
+            )
+        }
+        validateLocationForm()
+    }
+
     fun processAutoComplete(search: String) {
         viewModelScope.launch {
             try {
@@ -128,20 +137,36 @@ class HomeViewModel(
             var location = Location(
                 latitude = _locationFormState.value.latLng!!.latitude,
                 longitude = _locationFormState.value.latLng!!.longitude,
-                label = _locationFormState.value.label,
+                label = if (_locationFormState.value.label == "") null else _locationFormState.value.label,
                 address = _locationFormState.value.address,
             )
 
             if (_locationFormState.value.isEditing) {
                 viewModelScope.launch {
-//                    mainRepository.updateLocation(
-//                        Location(
-//                            latitude = _locationFormState.value.latLng!!.latitude,
-//                            longitude = _locationFormState.value.latLng!!.longitude,
-//                            label = _locationFormState.value.label,
-//                            address = _locationFormState.value.address,
-//                        )
-//                    )
+
+                    location = Location(
+                        id = _locationFormState.value.id!!,
+                        latitude = _locationFormState.value.latLng!!.latitude,
+                        longitude = _locationFormState.value.latLng!!.longitude,
+                        label = if (_locationFormState.value.label == "") null else _locationFormState.value.label,
+                        address = _locationFormState.value.address,
+                    )
+
+                    mainRepository.updateLocation(
+                        location
+                    )
+
+                    _locationFormState.update { LocationFormState() }
+
+                    _state.update {
+                        it.copy(
+                            mode = HomeUiState.Mode.Idled,
+                            selectedLocation = location,
+                            locations = it.locations.filter { loc -> loc.id != location.id }
+                                .plus(location)
+                        )
+                    }
+
                 }
             } else {
                 viewModelScope.launch {
@@ -152,7 +177,7 @@ class HomeViewModel(
                             id = newLocationId,
                             latitude = _locationFormState.value.latLng!!.latitude,
                             longitude = _locationFormState.value.latLng!!.longitude,
-                            label = _locationFormState.value.label,
+                            label = if (_locationFormState.value.label == "") null else _locationFormState.value.label,
                             address = _locationFormState.value.address,
                         )
 
@@ -179,6 +204,22 @@ class HomeViewModel(
                 selectedLocation = location
             )
         }
+    }
+
+    fun deleteSelectedLocation() {
+        val location = _state.value.selectedLocation ?: return
+
+        viewModelScope.launch {
+            mainRepository.deleteLocation(location.id)
+            _state.update {
+                it.copy(
+                    selectedLocation = null,
+                    locations = it.locations.filter { loc -> loc.id != location.id }
+                )
+            }
+        }
+
+
     }
 
 }

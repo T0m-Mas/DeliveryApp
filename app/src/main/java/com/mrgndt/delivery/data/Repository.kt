@@ -27,7 +27,21 @@ class MainRepository(private val dao: MainRepositoryDAO) {
                 it.label
             )
         }
+    }
 
+    suspend fun deleteLocation(id: Long) {
+        return dao.deleteLocation(id)
+    }
 
+    suspend fun updateLocation(location: Location) {
+        return dao.updateLocation(
+            LocationDB(
+                id = location.id,
+                latitude = location.latitude,
+                longitude = location.longitude,
+                address = location.address,
+                label = location.label,
+            )
+        )
     }
 }

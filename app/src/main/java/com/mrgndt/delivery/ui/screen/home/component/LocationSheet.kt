@@ -61,7 +61,6 @@ fun LocationSheet(
     onDismissRequest: () -> Unit,
     processSelectSuggestion: (String) -> Unit,
     saveLocation: () -> Unit,
-    deleteLocation: () -> Unit,
 ) {
 
     fun resetFormAndDismiss() {
@@ -183,20 +182,6 @@ fun LocationSheet(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            if (locationFormState.isEditing) {
-                SquareButton(
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError,
-                    ),
-                    onClick = deleteLocation
-                ) {
-                    Text(
-                        "Eliminar"
-                    )
-                }
-            }
             SquareButton(
                 modifier = Modifier.weight(1f),
                 onClick = saveLocation,
@@ -231,7 +216,6 @@ fun LocationSheetPreview() {
                 processAutoComplete = {},
                 processSelectSuggestion = {},
                 saveLocation = {},
-                deleteLocation = {}
             )
         }
     }

@@ -1,6 +1,7 @@
 package com.mrgndt.delivery.ui.screen.home.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,7 +30,8 @@ import com.mrgndt.delivery.ui.theme.DeliveryAppTheme
 @Composable
 fun LocationInfoCard(
     modifier: Modifier = Modifier,
-    location: Location
+    location: Location,
+    onClose: () -> Unit,
 ) {
     Column(
         modifier = modifier
@@ -41,26 +43,36 @@ fun LocationInfoCard(
             .background(
                 color = MaterialTheme.colorScheme.background,
                 shape = RoundedCornerShape(32f),
-                )
+            )
             .padding(16.dp)
     ) {
-        if(location.label!=null){
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
-                text = location.label,
+                text = location.label ?: "Lugar sin nombre",
                 fontWeight = FontWeight.W600,
                 color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 18.sp
             )
-        }
-        Row(
-            modifier = Modifier,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ){
             Icon(
-                painter = painterResource(R.drawable.ic_location),
-                contentDescription = null,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .clickable { onClose() },
+                painter = painterResource(R.drawable.ic_close),
+                contentDescription = "Cerrar",
+                tint = MaterialTheme.colorScheme.onBackground
 
             )
+        }
+
+        Row(
+            modifier = Modifier,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+
+            ) {
             Text(
                 text = location.address,
                 color = MaterialTheme.colorScheme.onBackground,
@@ -76,16 +88,23 @@ fun LocationInfoCard(
 @Composable
 fun LocationInfoCardPreview() {
     DeliveryAppTheme {
-        Box(Modifier.fillMaxSize().background(Color.White)) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Color.White)
+        ) {
             LocationInfoCard(
-                Modifier.align(Alignment.TopCenter).padding(16.dp),
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(16.dp),
                 Location(
                     id = 1,
                     latitude = 12.121212,
                     longitude = 12.12121,
                     address = "Casacuberta 1267, Castelar, Buenos Aires, Argentina",
                     label = "Casa de Tom"
-                )
+                ),
+                onClose = {}
             )
         }
     }

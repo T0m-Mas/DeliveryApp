@@ -16,4 +16,7 @@ interface MainRepositoryDAO {
     @Update
     suspend fun updateLocation(location: LocationDB)
 
+    @Query("DELETE FROM Location WHERE id = :id")
+    suspend fun deleteLocation(id: Long)
+
 }
