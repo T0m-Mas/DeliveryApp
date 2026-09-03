@@ -277,4 +277,16 @@ class HomeViewModel(
         }
     }
 
+    fun suggestLocations(search: String) {
+        _routeFormState.update {
+            it.copy(
+                stopsSuggestions = _state.value.locations.filter { location ->
+                    location.label?.contains(search, ignoreCase = true) == true ||
+                        location.address.contains(search, ignoreCase = true)
+                }.take(10)
+            )
+        }
+
+    }
+
 }

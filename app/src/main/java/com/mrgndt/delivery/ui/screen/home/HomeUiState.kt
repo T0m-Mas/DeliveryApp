@@ -37,8 +37,9 @@ data class RouteFormState(
     val id: Long? = null,
     val stops: List<Location> = emptyList(),
     val stage: Stage = Stage.StopsSelection,
+    val stopsSuggestions: List<Location> = emptyList()
 
-    ){
+) {
     enum class Stage {
         StopsSelection,
         StartNEndSelection,

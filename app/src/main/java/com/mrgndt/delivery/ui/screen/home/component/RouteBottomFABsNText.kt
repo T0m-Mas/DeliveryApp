@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -38,7 +39,7 @@ fun RouteBottomFABsNText(
             .padding(bottom = 16.dp)
             .then(modifier),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.Bottom,
     ) {
         OutlinedText(
             text = text,
@@ -50,10 +51,11 @@ fun RouteBottomFABsNText(
         ) {
             FloatingActionButton(
                 modifier = Modifier.size(40.dp),
+                shape = RoundedCornerShape(30f),
                 onClick = onAddLocationClick
             ) {
                 Icon(
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(24.dp),
                     painter = painterResource(R.drawable.ic_location_add),
                     contentDescription = null
                 )

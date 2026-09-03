@@ -484,7 +484,19 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 exit = slideOutVertically(targetOffsetY = { -it })
             ) {
                 RouteSearchBar(
-                    onSearch = {}
+                    onSearch = { viewModel.suggestLocations(it) },
+                    suggestions = routeFormState.stopsSuggestions,
+                    onSuggestionClick = {
+                        viewModel.toggleSelectStop(it)
+                        updateMapCamera(
+                            LatLng(
+                                it.latitude,
+                                it.longitude,
+                            ),
+                            if (mapCameraPositionState.position.zoom >= 16f)
+                                mapCameraPositionState.position.zoom else 16f
+                        )
+                    }
                 )
             }
 
