@@ -19,7 +19,7 @@ enum class PinColor {
 }
 
 enum class PinType {
-    Idle, Start, Stop
+    Idle, Start, Stop, Check
 }
 
 @Composable
@@ -42,6 +42,7 @@ fun Pin(
                     PinType.Idle -> R.drawable.pin_primary_light
                     PinType.Start -> R.drawable.pin_primary_light_start
                     PinType.Stop -> R.drawable.pin_primary_light_stop
+                    PinType.Check -> R.drawable.pin_primary_light_check
 
                 }
             }
@@ -51,6 +52,7 @@ fun Pin(
                     PinType.Idle -> R.drawable.pin_secondary_light
                     PinType.Start -> R.drawable.pin_secondary_light_start
                     PinType.Stop -> R.drawable.pin_secondary_light_stop
+                    PinType.Check -> R.drawable.pin_secondary_light_check
 
                 }
             }
@@ -60,6 +62,7 @@ fun Pin(
                     PinType.Idle -> R.drawable.pin_disabled_light
                     PinType.Start -> R.drawable.pin_disabled_light_start
                     PinType.Stop -> R.drawable.pin_disabled_light_stop
+                    PinType.Check -> R.drawable.pin_disabled_light_check
 
                 }
             }
@@ -71,6 +74,7 @@ fun Pin(
                     PinType.Idle -> R.drawable.pin_primary_dark
                     PinType.Start -> R.drawable.pin_primary_dark_start
                     PinType.Stop -> R.drawable.pin_primary_dark_stop
+                    PinType.Check -> R.drawable.pin_primary_dark_check
 
                 }
             }
@@ -80,6 +84,7 @@ fun Pin(
                     PinType.Idle -> R.drawable.pin_secondary_dark
                     PinType.Start -> R.drawable.pin_secondary_dark_start
                     PinType.Stop -> R.drawable.pin_secondary_dark_stop
+                    PinType.Check -> R.drawable.pin_secondary_dark_check
 
                 }
             }
@@ -89,6 +94,7 @@ fun Pin(
                     PinType.Idle -> R.drawable.pin_disabled_dark
                     PinType.Start -> R.drawable.pin_disabled_dark_start
                     PinType.Stop -> R.drawable.pin_disabled_dark_stop
+                    PinType.Check -> R.drawable.pin_disabled_dark_check
 
                 }
             }
@@ -104,7 +110,7 @@ fun Pin(
             onClick()
             false
         },
-        icon = bitmapDescriptorFromVector(context, pinResourceId)
+        icon = bitmapDescriptorFromVector(context, pinResourceId),
     )
 }
 

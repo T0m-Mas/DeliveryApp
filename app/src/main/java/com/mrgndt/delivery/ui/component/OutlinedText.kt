@@ -23,7 +23,7 @@ fun OutlinedText(
     modifier: Modifier = Modifier,
     fillColor: Color = MaterialTheme.colorScheme.onBackground,
     outlineColor: Color = MaterialTheme.colorScheme.background,
-    strokeWidth: Float = 3f,
+    strokeWidth: Float = 6f,
     style: TextStyle = TextStyle.Default.copy(fontSize = 16.sp, fontWeight = FontWeight.Normal)
 ) {
     Box(modifier = modifier) {

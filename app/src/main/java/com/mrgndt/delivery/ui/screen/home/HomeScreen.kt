@@ -64,6 +64,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.mrgndt.delivery.R
 import com.mrgndt.delivery.ui.component.Pin
 import com.mrgndt.delivery.ui.component.PinColor
+import com.mrgndt.delivery.ui.component.PinType
 import com.mrgndt.delivery.ui.screen.home.component.DeliveryMap
 import com.mrgndt.delivery.ui.screen.home.component.Drawer
 import com.mrgndt.delivery.ui.screen.home.component.LocationConfirmDeleteDialog
@@ -260,6 +261,19 @@ fun HomeScreen(viewModel: HomeViewModel) {
         }
     }
 
+    fun determinePinType(location: com.mrgndt.delivery.model.Location): PinType {
+        return if (state.mode == HomeUiState.Mode.NewRoute) {
+            if (routeFormState.stops.contains(location)) {
+                PinType.Check
+            } else {
+                PinType.Idle
+            }
+        } else {
+            PinType.Idle
+        }
+    }
+
+
     fun shouldShowMenuButton(): Boolean {
         if (state.selectedLocation !== null) return false
         if (state.mode == HomeUiState.Mode.Idled) return true
@@ -332,7 +346,8 @@ fun HomeScreen(viewModel: HomeViewModel) {
                                 onClick = {
                                     handleLocationMarkerClick(location)
                                 },
-                                color = determinePinColor(location)
+                                color = determinePinColor(location),
+                                type = determinePinType(location)
                             )
                         }
                     }
