@@ -26,6 +26,9 @@ class HomeViewModel(
     private val _locationFormState = MutableStateFlow(LocationFormState())
     val locationFormState = _locationFormState.asStateFlow()
 
+    private val _routeFormState = MutableStateFlow(RouteFormState())
+    val routeFormState = _routeFormState.asStateFlow()
+
     init {
         viewModelScope.launch {
             _state.update {
@@ -50,6 +53,18 @@ class HomeViewModel(
     }
 
     fun updateMode(mode: HomeUiState.Mode) {
+        if (mode == HomeUiState.Mode.Idled && _state.value.mode == HomeUiState.Mode.NewRoute) {
+            viewModelScope.launch {
+                _state.update {
+                    it.copy(
+                        locations = mainRepository.getAllLocations()
+                    )
+                }
+            }
+            _routeFormState.update {
+                RouteFormState()
+            }
+        }
         _state.update {
             it.copy(
                 mode = mode
@@ -114,14 +129,14 @@ class HomeViewModel(
         }
     }
 
-    private fun canSave(): Boolean {
+    private fun isLocationFormValid(): Boolean {
         return _locationFormState.value.latLng != null && _locationFormState.value.address.length >= 4
     }
 
     fun validateLocationForm() {
         _locationFormState.update {
             it.copy(
-                canSave = canSave()
+                formIsValid = isLocationFormValid()
             )
         }
     }
@@ -129,7 +144,7 @@ class HomeViewModel(
     fun saveLocation() {
 
 
-        if (canSave()) {
+        if (isLocationFormValid()) {
 
 
             var location = Location(
@@ -139,7 +154,21 @@ class HomeViewModel(
                 address = _locationFormState.value.address,
             )
 
-            if (_locationFormState.value.isEditing) {
+            if (_locationFormState.value.isGhostLocation) {
+                _locationFormState.update { LocationFormState() }
+
+                _state.update {
+                    it.copy(
+                        mode = HomeUiState.Mode.NewRoute,
+                        locations = it.locations.plus(location)
+                    )
+                }
+                _routeFormState.update {
+                    it.copy(
+                        stops = it.stops.plus(location)
+                    )
+                }
+            } else if (_locationFormState.value.isEditing) {
                 viewModelScope.launch {
 
                     location = Location(
@@ -170,6 +199,7 @@ class HomeViewModel(
                 viewModelScope.launch {
                     try {
                         val newLocationId = mainRepository.saveLocation(location)
+                        val cameFromNewRoute = _locationFormState.value.canBeGhost
 
                         location = Location(
                             id = newLocationId,
@@ -182,9 +212,17 @@ class HomeViewModel(
                         _locationFormState.update { LocationFormState() }
                         _state.update {
                             it.copy(
-                                mode = HomeUiState.Mode.Idled,
+                                mode = if (cameFromNewRoute) HomeUiState.Mode.NewRoute else HomeUiState.Mode.Idled,
                                 locations = it.locations.plus(location)
                             )
+                        }
+
+                        if (cameFromNewRoute) {
+                            _routeFormState.update {
+                                it.copy(
+                                    stops = it.stops.plus(location)
+                                )
+                            }
                         }
                     } catch (e: Exception) {
                         Log.d("saveLocation", "$e")
@@ -216,8 +254,27 @@ class HomeViewModel(
                 )
             }
         }
+    }
 
+    fun toggleSelectStop(location: Location) {
+        val contains = _routeFormState.value.stops.contains(location)
+        _routeFormState.update {
+            it.copy(
+                stops = if (contains) it.stops.filter { loc -> loc.id != location.id }
+                else it.stops.plus(location)
+            )
+        }
+    }
 
+    fun startNewOptionalLocationMode() {
+        _state.update {
+            it.copy(
+                mode = HomeUiState.Mode.LocationForm
+            )
+        }
+        _locationFormState.update {
+            LocationFormState(canBeGhost = true)
+        }
     }
 
 }

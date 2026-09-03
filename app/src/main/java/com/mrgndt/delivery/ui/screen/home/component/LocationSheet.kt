@@ -26,10 +26,10 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.android.gms.maps.model.LatLng
 import com.mrgndt.delivery.R
 import com.mrgndt.delivery.ui.component.DeliveryAppAutoCompleteTextField
 import com.mrgndt.delivery.ui.component.DeliveryAppTextField
@@ -73,6 +74,18 @@ fun LocationSheet(
     val windowInsets = WindowInsets.safeDrawing.asPaddingValues()
     val layoutDirection = if (config.layoutDirection == LAYOUT_DIRECTION_RTL)
         LayoutDirection.Rtl else LayoutDirection.Ltr
+
+    fun determinateTitle(): String {
+        return if (locationFormState.canBeGhost) "Agregar Lugar"
+        else if (locationFormState.isEditing) "Editar Lugar"
+        else "Registrar Lugar"
+    }
+
+    fun toggleIsGhostLocation() {
+        updateState(
+            locationFormState.copy(isGhostLocation = !locationFormState.isGhostLocation)
+        )
+    }
 
 
     Column(
@@ -110,7 +123,7 @@ fun LocationSheet(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = if (locationFormState.isEditing) "Editar Lugar" else "Registrar Lugar",
+                text = determinateTitle(),
                 color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.W600
@@ -172,6 +185,24 @@ fun LocationSheet(
                 label = "Dirección",
                 placeholder = "Ingrese una dirección"
             )
+            if (locationFormState.canBeGhost) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { toggleIsGhostLocation() },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Guardar Lugar",
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                    Switch(
+                        checked = locationFormState.isGhostLocation.not(),
+                        onCheckedChange = { toggleIsGhostLocation() }
+                    )
+                }
+            }
         }
 
         Spacer(
@@ -185,7 +216,7 @@ fun LocationSheet(
             SquareButton(
                 modifier = Modifier.weight(1f),
                 onClick = saveLocation,
-                enabled = locationFormState.canSave
+                enabled = locationFormState.formIsValid
             ) {
                 Text(
                     "Guardar"
@@ -210,7 +241,10 @@ fun LocationSheetPreview() {
         ) {
             LocationSheet(
                 modifier = Modifier.align(Alignment.BottomCenter),
-                locationFormState = LocationFormState(),
+                locationFormState = LocationFormState(
+                    latLng = LatLng(0.0, 0.0),
+                    canBeGhost = true
+                ),
                 updateState = {},
                 onDismissRequest = {},
                 processAutoComplete = {},

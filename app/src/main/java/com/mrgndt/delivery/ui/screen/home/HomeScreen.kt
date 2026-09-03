@@ -70,6 +70,8 @@ import com.mrgndt.delivery.ui.screen.home.component.LocationConfirmDeleteDialog
 import com.mrgndt.delivery.ui.screen.home.component.LocationDeleteNEditButtons
 import com.mrgndt.delivery.ui.screen.home.component.LocationInfoCard
 import com.mrgndt.delivery.ui.screen.home.component.LocationSheet
+import com.mrgndt.delivery.ui.screen.home.component.RouteBottomFABsNText
+import com.mrgndt.delivery.ui.screen.home.component.RouteSearchBar
 import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
@@ -87,6 +89,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
     val state by viewModel.state.collectAsState()
     val locationFormState by viewModel.locationFormState.collectAsState()
+    val routeFormState by viewModel.routeFormState.collectAsState()
 
     val statusBarPaddingValues = WindowInsets.statusBars.asPaddingValues()
     val navigationBarPaddingValues = WindowInsets.navigationBars.asPaddingValues()
@@ -183,6 +186,9 @@ fun HomeScreen(viewModel: HomeViewModel) {
         if (state.mode == HomeUiState.Mode.Idled) {
             viewModel.setSelectedLocation(location)
         }
+        if (state.mode == HomeUiState.Mode.NewRoute) {
+            viewModel.toggleSelectStop(location)
+        }
     }
 
 
@@ -212,7 +218,6 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     mapCameraPositionState.position.zoom else 16f
             )
         }
-
     }
 
 
@@ -240,6 +245,18 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 start = 16.dp,
                 end = 16.dp
             )
+        }
+    }
+
+    fun determinePinColor(location: com.mrgndt.delivery.model.Location): PinColor {
+        return if (state.mode == HomeUiState.Mode.NewRoute) {
+            if (routeFormState.stops.contains(location)) {
+                PinColor.Secondary
+            } else {
+                PinColor.Primary
+            }
+        } else {
+            PinColor.Primary
         }
     }
 
@@ -314,7 +331,8 @@ fun HomeScreen(viewModel: HomeViewModel) {
                                 position = LatLng(location.latitude, location.longitude),
                                 onClick = {
                                     handleLocationMarkerClick(location)
-                                }
+                                },
+                                color = determinePinColor(location)
                             )
                         }
                     }
@@ -437,15 +455,40 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
             // ==================================================
             // ==================================================
-            // LOCATION FORM MODE
+            // NEW ROUTE MODE -> STAGE 1
             // ==================================================
             // ==================================================
-            AnimatedVisibility(
-                visible = state.mode == HomeUiState.Mode.NewRoute
-            ) {
-
-
+            if (state.mode == HomeUiState.Mode.NewRoute && routeFormState.stage == RouteFormState.Stage.StopsSelection) {
+                BackHandler {
+                    viewModel.updateMode(HomeUiState.Mode.Idled)
+                }
             }
+            AnimatedVisibility(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                visible = state.mode == HomeUiState.Mode.NewRoute && routeFormState.stage == RouteFormState.Stage.StopsSelection,
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it })
+            ) {
+                RouteBottomFABsNText(
+                    text = if (routeFormState.stops.isEmpty()) "Seleccioná las paradas"
+                    else "${routeFormState.stops.size} seleccionada(s)",
+                    onCheckClick = {},
+                    onAddLocationClick = { viewModel.startNewOptionalLocationMode() }
+
+                )
+            }
+            AnimatedVisibility(
+                modifier = Modifier.align(Alignment.TopCenter),
+                visible = state.mode == HomeUiState.Mode.NewRoute && routeFormState.stage == RouteFormState.Stage.StopsSelection,
+                enter = slideInVertically(initialOffsetY = { -it }),
+                exit = slideOutVertically(targetOffsetY = { -it })
+            ) {
+                RouteSearchBar(
+                    onSearch = {}
+                )
+            }
+
+
         }
     }
 

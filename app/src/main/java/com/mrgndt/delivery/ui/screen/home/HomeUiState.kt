@@ -22,11 +22,25 @@ data class LocationFormState(
     val address: String = "",
     val latLng: LatLng? = null,
     val isEditing: Boolean = false,
-    val canSave: Boolean = false,
-    val addressSuggestions: List<AddressSuggestions> = emptyList()
+    val formIsValid: Boolean = false,
+    val addressSuggestions: List<AddressSuggestions> = emptyList(),
+    val canBeGhost: Boolean = false,
+    val isGhostLocation: Boolean = false
 ) {
     data class AddressSuggestions(
         val label: String,
         val placeId: String
     )
+}
+
+data class RouteFormState(
+    val id: Long? = null,
+    val stops: List<Location> = emptyList(),
+    val stage: Stage = Stage.StopsSelection,
+
+    ){
+    enum class Stage {
+        StopsSelection,
+        StartNEndSelection,
+    }
 }
