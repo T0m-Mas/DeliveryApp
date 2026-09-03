@@ -60,10 +60,10 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.CancellationTokenSource
-import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.google.maps.android.compose.rememberUpdatedMarkerState
 import com.mrgndt.delivery.R
+import com.mrgndt.delivery.ui.component.Pin
+import com.mrgndt.delivery.ui.component.PinColor
 import com.mrgndt.delivery.ui.screen.home.component.DeliveryMap
 import com.mrgndt.delivery.ui.screen.home.component.Drawer
 import com.mrgndt.delivery.ui.screen.home.component.LocationConfirmDeleteDialog
@@ -288,19 +288,19 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 isMyLocationEnabled = locationPermissionsEnabled
             ) {
                 if (locationFormState.latLng != null) {
-                    Marker(
-                        state = rememberUpdatedMarkerState(position = locationFormState.latLng!!)
+                    Pin(
+                        position = locationFormState.latLng!!,
+                        color = PinColor.Secondary
                     )
                 }
 
                 if (state.selectedLocation != null && locationFormState.latLng == null) {
-                    Marker(
-                        state = rememberUpdatedMarkerState(
-                            position = LatLng(
-                                state.selectedLocation!!.latitude,
-                                state.selectedLocation!!.longitude
-                            )
-                        )
+                    Pin(
+                        position = LatLng(
+                            state.selectedLocation!!.latitude,
+                            state.selectedLocation!!.longitude
+                        ),
+                        color = PinColor.Secondary
                     )
                 }
 
@@ -310,13 +310,10 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     }
                     .forEach { location ->
                         key(location.id) {
-                            Marker(
-                                state = rememberUpdatedMarkerState(
-                                    position = LatLng(location.latitude, location.longitude)
-                                ),
+                            Pin(
+                                position = LatLng(location.latitude, location.longitude),
                                 onClick = {
                                     handleLocationMarkerClick(location)
-                                    false
                                 }
                             )
                         }
@@ -417,8 +414,6 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     )
                 }
             }
-
-
             // ==================================================
             // ==================================================
             // LOCATION FORM MODE
@@ -438,6 +433,18 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     processSelectSuggestion = { viewModel.processSelectSuggestion(it) },
                     saveLocation = { viewModel.saveLocation() },
                 )
+            }
+
+            // ==================================================
+            // ==================================================
+            // LOCATION FORM MODE
+            // ==================================================
+            // ==================================================
+            AnimatedVisibility(
+                visible = state.mode == HomeUiState.Mode.NewRoute
+            ) {
+
+
             }
         }
     }

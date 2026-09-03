@@ -33,9 +33,7 @@ class HomeViewModel(
                     locations = mainRepository.getAllLocations()
                 )
             }
-
         }
-
     }
 
     companion object {
