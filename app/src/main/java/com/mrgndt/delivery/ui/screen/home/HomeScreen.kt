@@ -190,7 +190,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
     fun handleMapClick(latLng: LatLng) {
         when (state.mode) {
-            HomeUiState.Mode.Idled -> Unit
+            HomeUiState.Mode.Idle -> Unit
 
             HomeUiState.Mode.LocationForm -> {
                 viewModel.updateLocationFormLatLng(latLng = latLng)
@@ -203,7 +203,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
     fun handleMapLongClick(latLng: LatLng) {
         when (state.mode) {
-            HomeUiState.Mode.Idled -> {
+            HomeUiState.Mode.Idle -> {
                 viewModel.updateMode(HomeUiState.Mode.LocationForm)
                 viewModel.updateLocationFormState(
                     LocationFormState(latLng = latLng)
@@ -220,7 +220,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
     }
 
     fun handleLocationMarkerClick(location: com.mrgndt.delivery.model.Location) {
-        if (state.mode == HomeUiState.Mode.Idled) {
+        if (state.mode == HomeUiState.Mode.Idle) {
             viewModel.setSelectedLocation(location)
         }
         if (state.mode == HomeUiState.Mode.NewRoute) {
@@ -314,7 +314,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
     fun shouldShowMenuButton(): Boolean {
         if (state.selectedLocation !== null) return false
-        if (state.mode == HomeUiState.Mode.Idled) return true
+        if (state.mode == HomeUiState.Mode.Idle) return true
         return false
     }
 
@@ -431,7 +431,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
             // LOCATION SELECTED PSEUDO MODE
             // ==================================================
             // ==================================================
-            if (state.selectedLocation != null && state.mode == HomeUiState.Mode.Idled) {
+            if (state.selectedLocation != null && state.mode == HomeUiState.Mode.Idle) {
 
                 LocationInfoCard(
                     modifier = Modifier
@@ -510,7 +510,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 LocationSheet(
                     locationFormState = locationFormState,
                     updateState = { viewModel.updateLocationFormState(it) },
-                    onDismissRequest = { viewModel.updateMode(HomeUiState.Mode.Idled) },
+                    onDismissRequest = { viewModel.updateMode(HomeUiState.Mode.Idle) },
                     processAutoComplete = { viewModel.processAutoComplete(it) },
                     processSelectSuggestion = { viewModel.processSelectSuggestion(it) },
                     saveLocation = { viewModel.saveLocation() },
@@ -519,12 +519,12 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
             // ==================================================
             // ==================================================
-            // NEW ROUTE MODE -> STAGE 1
+            // NEW ROUTE MODE -> STAGE 1: Seleccionar Paradas
             // ==================================================
             // ==================================================
             if (state.mode == HomeUiState.Mode.NewRoute && routeFormState.stage == RouteFormState.Stage.StopsSelection) {
                 BackHandler {
-                    viewModel.updateMode(HomeUiState.Mode.Idled)
+                    viewModel.updateMode(HomeUiState.Mode.Idle)
                 }
             }
             AnimatedVisibility(
@@ -565,7 +565,16 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     }
                 )
             }
-
+            // ==================================================
+            // ==================================================
+            // NEW ROUTE MODE -> STAGE 2: Seleccionar Largada y Llegada
+            // ==================================================
+            // ==================================================
+            if (state.mode == HomeUiState.Mode.NewRoute && routeFormState.stage == RouteFormState.Stage.StartNEndSelection) {
+                BackHandler {
+                    viewModel
+                }
+            }
 
         }
     }

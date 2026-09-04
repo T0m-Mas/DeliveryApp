@@ -53,7 +53,7 @@ class HomeViewModel(
     }
 
     fun updateMode(mode: HomeUiState.Mode) {
-        if (mode == HomeUiState.Mode.Idled && _state.value.mode == HomeUiState.Mode.NewRoute) {
+        if (mode == HomeUiState.Mode.Idle && _state.value.mode == HomeUiState.Mode.NewRoute) {
             viewModelScope.launch {
                 _state.update {
                     it.copy(
@@ -96,7 +96,7 @@ class HomeViewModel(
                 _locationFormState.update {
                     it.copy(
                         addressSuggestions = response.suggestions.map { suggestion ->
-                            LocationFormState.AddressSuggestions(
+                            AddressSuggestion(
                                 label = suggestion.placePrediction.text.text,
                                 placeId = suggestion.placePrediction.placeId
                             )
@@ -187,7 +187,7 @@ class HomeViewModel(
 
                     _state.update {
                         it.copy(
-                            mode = HomeUiState.Mode.Idled,
+                            mode = HomeUiState.Mode.Idle,
                             selectedLocation = location,
                             locations = it.locations.filter { loc -> loc.id != location.id }
                                 .plus(location)
@@ -212,7 +212,7 @@ class HomeViewModel(
                         _locationFormState.update { LocationFormState() }
                         _state.update {
                             it.copy(
-                                mode = if (cameFromNewRoute) HomeUiState.Mode.NewRoute else HomeUiState.Mode.Idled,
+                                mode = if (cameFromNewRoute) HomeUiState.Mode.NewRoute else HomeUiState.Mode.Idle,
                                 locations = it.locations.plus(location)
                             )
                         }
@@ -282,7 +282,7 @@ class HomeViewModel(
             it.copy(
                 stopsSuggestions = _state.value.locations.filter { location ->
                     location.label?.contains(search, ignoreCase = true) == true ||
-                        location.address.contains(search, ignoreCase = true)
+                            location.address.contains(search, ignoreCase = true)
                 }.take(10)
             )
         }
