@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -12,6 +13,7 @@ import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.mrgndt.delivery.ui.theme.DeliveryAppTheme
@@ -24,6 +26,7 @@ fun OutlinedText(
     fillColor: Color = MaterialTheme.colorScheme.onBackground,
     outlineColor: Color = MaterialTheme.colorScheme.background,
     strokeWidth: Float = 6f,
+    maxLines: Int = Int.MAX_VALUE,
     style: TextStyle = TextStyle.Default.copy(fontSize = 16.sp, fontWeight = FontWeight.Normal)
 ) {
     Box(modifier = modifier) {
@@ -37,6 +40,8 @@ fun OutlinedText(
                     join = StrokeJoin.Round
                 )
             ),
+            overflow = TextOverflow.Ellipsis,
+            maxLines = maxLines,
             // Hide from accessibility services to prevent screen readers from reading it twice
             modifier = Modifier.semantics { hideFromAccessibility() }
         )
@@ -45,7 +50,9 @@ fun OutlinedText(
         Text(
             text = text,
             color = fillColor,
-            style = style
+            style = style,
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

@@ -2,8 +2,13 @@ package com.mrgndt.delivery.ui.screen.home
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.location.Location
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.view.View.LAYOUT_DIRECTION_LTR
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -106,6 +111,31 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
     var showDeleteConfirmationDialog by rememberSaveable { mutableStateOf(false) }
 
+    val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val vibratorManager =
+            context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+        vibratorManager.defaultVibrator
+    } else {
+        @Suppress("DEPRECATION")
+        context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    }
+
+    fun triggerVibration(durationMs: Long) {
+        // 2. Execute vibration using the safe API version
+        if (vibrator.hasVibrator()) { // Safety check to see if hardware exists
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // For API 26 and above (OneShot effect)
+                val effect =
+                    VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE)
+                vibrator.vibrate(effect)
+            } else {
+                // For API 25 and below (Deprecated in newer APIs but required for backward compatibility)
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(durationMs)
+            }
+        }
+    }
+
     fun updateMapCamera(target: LatLng, zoom: Float, tilt: Float = 0f, bearing: Float = 0f) {
         val cameraUpdate = CameraUpdateFactory
             .newCameraPosition(
@@ -151,6 +181,12 @@ fun HomeScreen(viewModel: HomeViewModel) {
         }
     }
 
+    fun toggleSelectStop(location: com.mrgndt.delivery.model.Location) {
+        if (routeFormState.stops.contains(location).not()) {
+            triggerVibration(80)
+        }
+        viewModel.toggleSelectStop(location)
+    }
 
     fun handleMapClick(latLng: LatLng) {
         when (state.mode) {
@@ -188,9 +224,11 @@ fun HomeScreen(viewModel: HomeViewModel) {
             viewModel.setSelectedLocation(location)
         }
         if (state.mode == HomeUiState.Mode.NewRoute) {
-            viewModel.toggleSelectStop(location)
+            toggleSelectStop(location)
         }
     }
+
+
 
 
     LaunchedEffect(Unit) {
@@ -252,12 +290,12 @@ fun HomeScreen(viewModel: HomeViewModel) {
     fun determinePinColor(location: com.mrgndt.delivery.model.Location): PinColor {
         return if (state.mode == HomeUiState.Mode.NewRoute) {
             if (routeFormState.stops.contains(location)) {
-                PinColor.Secondary
-            } else {
                 PinColor.Primary
+            } else {
+                PinColor.Secondary
             }
         } else {
-            PinColor.Primary
+            PinColor.Secondary
         }
     }
 
@@ -318,36 +356,47 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 gestureEnabled = state.selectedLocation == null,
                 isMyLocationEnabled = locationPermissionsEnabled
             ) {
+                //
+                // Pins de LocationForm
+                //
                 if (locationFormState.latLng != null) {
                     Pin(
                         position = locationFormState.latLng!!,
-                        color = PinColor.Secondary
+                        color = PinColor.Primary
                     )
                 }
-
                 if (state.selectedLocation != null && locationFormState.latLng == null) {
                     Pin(
                         position = LatLng(
                             state.selectedLocation!!.latitude,
                             state.selectedLocation!!.longitude
                         ),
-                        color = PinColor.Secondary
+                        color = PinColor.Primary
                     )
                 }
-
+                //
+                // Pins de Home
+                //
                 state.locations
                     .filter { loc ->
                         loc != state.selectedLocation
                     }
                     .forEach { location ->
-                        key(location.id) {
+                        key(
+                            location.id,
+                            location.latitude,
+                            location.longitude,
+                            determinePinColor(location),
+                            determinePinType(location)
+                        ) {
                             Pin(
                                 position = LatLng(location.latitude, location.longitude),
                                 onClick = {
                                     handleLocationMarkerClick(location)
                                 },
                                 color = determinePinColor(location),
-                                type = determinePinType(location)
+                                type = determinePinType(location),
+                                label = location.label ?: location.address
                             )
                         }
                     }
@@ -499,10 +548,12 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 exit = slideOutVertically(targetOffsetY = { -it })
             ) {
                 RouteSearchBar(
-                    onSearch = { viewModel.suggestLocations(it) },
+                    onSearch = {
+                        viewModel.suggestLocations(it)
+                    },
                     suggestions = routeFormState.stopsSuggestions,
                     onSuggestionClick = {
-                        viewModel.toggleSelectStop(it)
+                        toggleSelectStop(it)
                         updateMapCamera(
                             LatLng(
                                 it.latitude,

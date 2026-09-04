@@ -1,16 +1,28 @@
 package com.mrgndt.delivery.ui.component
 
-import android.content.Context
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.absoluteOffset
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.createBitmap
-import com.google.android.gms.maps.model.BitmapDescriptor
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMapComposable
-import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.rememberUpdatedMarkerState
 import com.mrgndt.delivery.R
 
@@ -28,12 +40,11 @@ fun Pin(
     position: LatLng,
     onClick: () -> Unit = {},
     color: PinColor = PinColor.Primary,
-    type: PinType = PinType.Idle
+    type: PinType = PinType.Idle,
+    label: String? = null,
 ) {
 
     val isSystemDarkTheme = isSystemInDarkTheme()
-
-    val context = LocalContext.current
 
     val pinResourceId: Int = if (!isSystemDarkTheme) {
         when (color) {
@@ -102,7 +113,7 @@ fun Pin(
     }
 
 
-    Marker(
+    MarkerComposable(
         state = rememberUpdatedMarkerState(
             position = position
         ),
@@ -110,22 +121,72 @@ fun Pin(
             onClick()
             false
         },
-        icon = bitmapDescriptorFromVector(context, pinResourceId),
-    )
+        anchor = if (label != null) Offset(0.172f, 1.0f) else Offset(0.5f, 1.0f)
+    ) {
+        Row(
+            modifier = Modifier
+                .then(
+                    other =
+                        if (label != null)
+                            Modifier.width(120.dp)
+                        else Modifier
+                ),
+            verticalAlignment = Alignment.Top,
+        ) {
+            Image(
+                modifier = Modifier.size(42.dp),
+                painter = painterResource(pinResourceId),
+                contentDescription = null
+            )
+            if (label != null) {
+                OutlinedText(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    text = label,
+                    maxLines = 1,
+                    style = TextStyle(
+                        fontSize = 10.sp
+                    )
+                )
+            }
+
+        }
+    }
 }
 
-fun bitmapDescriptorFromVector(
-    context: Context,
-    vectorResId: Int
-): BitmapDescriptor? {
+@Preview
+@Composable
+fun Preview(){
 
-    // retrieve the actual drawable
-    val drawable = ContextCompat.getDrawable(context, vectorResId) ?: return null
-    drawable.setBounds(0, 0, drawable.intrinsicWidth, drawable.intrinsicHeight)
-    val bm = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
+    var label:String? = "ADOX S.A."
 
-    // draw it onto the bitmap
-    val canvas = android.graphics.Canvas(bm)
-    drawable.draw(canvas)
-    return BitmapDescriptorFactory.fromBitmap(bm)
+    Box(){
+    Box(Modifier.padding(start = (120*0.172).dp,top=42.dp).size(1.dp).background(Color.Red))
+    Row(
+        modifier = Modifier
+            .then(
+                other =
+                    if (label != null)
+                        Modifier.width(120.dp)
+                    else Modifier
+            ),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Image(
+            modifier = Modifier.size(42.dp),
+            painter = painterResource(R.drawable.pin_primary_light),
+            contentDescription = null
+        )
+        if (label != null) {
+            OutlinedText(
+                modifier = Modifier.padding(vertical = 8.dp),
+                text = label,
+                maxLines = 1,
+                style = TextStyle(
+                    fontSize = 10.sp
+                )
+            )
+        }
+
+    }
+    }
 }
