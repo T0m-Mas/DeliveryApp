@@ -77,6 +77,7 @@ import com.mrgndt.delivery.ui.screen.home.component.LocationDeleteNEditButtons
 import com.mrgndt.delivery.ui.screen.home.component.LocationInfoCard
 import com.mrgndt.delivery.ui.screen.home.component.LocationSheet
 import com.mrgndt.delivery.ui.screen.home.component.RouteBottomFABsNText
+import com.mrgndt.delivery.ui.screen.home.component.RouteExtremePointeSheet
 import com.mrgndt.delivery.ui.screen.home.component.RouteSearchBar
 import kotlinx.coroutines.launch
 
@@ -96,6 +97,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
     val state by viewModel.state.collectAsState()
     val locationFormState by viewModel.locationFormState.collectAsState()
     val routeFormState by viewModel.routeFormState.collectAsState()
+    val extremePointFormState by viewModel.extremePointFormState.collectAsState()
 
     val statusBarPaddingValues = WindowInsets.statusBars.asPaddingValues()
     val navigationBarPaddingValues = WindowInsets.navigationBars.asPaddingValues()
@@ -153,6 +155,18 @@ fun HomeScreen(viewModel: HomeViewModel) {
         }
     }
 
+    fun getCurrentLocation(callback: (Location?) -> Unit) {
+        val cancellationTokenSource = CancellationTokenSource()
+        fusedLocationClient.getCurrentLocation(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            cancellationTokenSource.token
+        ).addOnSuccessListener { location: Location? ->
+            callback(location)
+        }.addOnFailureListener { exception ->
+            Toast.makeText(context, "${exception.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -161,25 +175,26 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
         if (isGranted) {
             locationPermissionsEnabled = true
-            val cancellationTokenSource = CancellationTokenSource()
-            fusedLocationClient.getCurrentLocation(
-                Priority.PRIORITY_HIGH_ACCURACY,
-                cancellationTokenSource.token
-            ).addOnSuccessListener { location: Location? ->
+            getCurrentLocation { location ->
                 if (location != null) {
                     updateMapCamera(
                         target = LatLng(location.latitude, location.longitude),
                         zoom = 12f
                     )
+                } else {
+                    Toast.makeText(
+                        context,
+                        "No fue posible obtener la ubicación actual",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
-            }.addOnFailureListener { exception ->
-                Toast.makeText(context, "${exception.message}", Toast.LENGTH_SHORT).show()
-
             }
+
         } else {
             locationPermissionsEnabled = false
         }
     }
+
 
     fun toggleSelectStop(location: com.mrgndt.delivery.model.Location) {
         if (routeFormState.stops.contains(location).not()) {
@@ -196,7 +211,15 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 viewModel.updateLocationFormLatLng(latLng = latLng)
             }
 
-            HomeUiState.Mode.NewRoute -> Unit
+            HomeUiState.Mode.NewRoute -> {
+                if (
+                    routeFormState.stage == RouteFormState.Stage.StartSelection ||
+                    routeFormState.stage == RouteFormState.Stage.EndSelection
+                ) {
+                    viewModel.setExtremePointLatLng(latLng)
+                }
+            }
+
             HomeUiState.Mode.Route -> Unit
         }
     }
@@ -224,7 +247,9 @@ fun HomeScreen(viewModel: HomeViewModel) {
             viewModel.setSelectedLocation(location)
         }
         if (state.mode == HomeUiState.Mode.NewRoute) {
-            toggleSelectStop(location)
+            if (routeFormState.stage == RouteFormState.Stage.StopsSelection) {
+                toggleSelectStop(location)
+            }
         }
     }
 
@@ -269,7 +294,11 @@ fun HomeScreen(viewModel: HomeViewModel) {
             PaddingValues(
                 top = statusBarPaddingValues.calculateTopPadding(),
                 bottom = navigationBarPaddingValues.calculateBottomPadding(),
-                start = if (state.mode == HomeUiState.Mode.LocationForm) 500.dp
+                start = if (
+                    state.mode == HomeUiState.Mode.LocationForm ||
+                    (state.mode == HomeUiState.Mode.NewRoute && routeFormState.stage == RouteFormState.Stage.StartSelection) ||
+                    (state.mode == HomeUiState.Mode.NewRoute && routeFormState.stage == RouteFormState.Stage.EndSelection)
+                ) 500.dp
                 else safeDrawing.calculateStartPadding(
                     if (layoutDirection == LAYOUT_DIRECTION_LTR)
                         LayoutDirection.Ltr else LayoutDirection.Rtl
@@ -279,7 +308,11 @@ fun HomeScreen(viewModel: HomeViewModel) {
         } else {
             PaddingValues(
                 top = statusBarPaddingValues.calculateTopPadding(),
-                bottom = if (state.mode == HomeUiState.Mode.LocationForm) 500.dp
+                bottom = if (
+                    state.mode == HomeUiState.Mode.LocationForm ||
+                    (state.mode == HomeUiState.Mode.NewRoute && routeFormState.stage == RouteFormState.Stage.StartSelection) ||
+                    (state.mode == HomeUiState.Mode.NewRoute && routeFormState.stage == RouteFormState.Stage.EndSelection)
+                ) 500.dp
                 else navigationBarPaddingValues.calculateBottomPadding(),
                 start = 16.dp,
                 end = 16.dp
@@ -316,6 +349,24 @@ fun HomeScreen(viewModel: HomeViewModel) {
         if (state.selectedLocation !== null) return false
         if (state.mode == HomeUiState.Mode.Idle) return true
         return false
+    }
+
+    fun filterMapPins(location: com.mrgndt.delivery.model.Location): Boolean {
+        if (state.selectedLocation != null) {
+            return location != state.selectedLocation
+        }
+
+        if (
+            state.mode == HomeUiState.Mode.NewRoute &&
+            (
+                    routeFormState.stage == RouteFormState.Stage.StartSelection ||
+                            routeFormState.stage == RouteFormState.Stage.EndSelection
+                    )
+        ) {
+            return routeFormState.stops.contains(location)
+        }
+
+        return true
     }
 
     ModalNavigationDrawer(
@@ -374,13 +425,41 @@ fun HomeScreen(viewModel: HomeViewModel) {
                         color = PinColor.Primary
                     )
                 }
+
+                //
+                // Pint Start
+                //
+                if (routeFormState.stage == RouteFormState.Stage.StartSelection && extremePointFormState.point != null) {
+                    Pin(
+                        position = LatLng(
+                            extremePointFormState.point!!.latitude,
+                            extremePointFormState.point!!.longitude
+                        ),
+                        color = PinColor.Primary,
+                        type = PinType.Start
+                    )
+                }
+
+                //
+                // Pint Stop
+                //
+                if (routeFormState.stage == RouteFormState.Stage.EndSelection && extremePointFormState.point != null) {
+                    Pin(
+                        position = LatLng(
+                            extremePointFormState.point!!.latitude,
+                            extremePointFormState.point!!.longitude
+                        ),
+                        color = PinColor.Primary,
+                        type = PinType.Stop
+                    )
+                }
+
+
                 //
                 // Pins de Home
                 //
                 state.locations
-                    .filter { loc ->
-                        loc != state.selectedLocation
-                    }
+                    .filter(predicate = ::filterMapPins)
                     .forEach { location ->
                         key(
                             location.id,
@@ -400,6 +479,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                             )
                         }
                     }
+
 
             }
 
@@ -536,7 +616,31 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 RouteBottomFABsNText(
                     text = if (routeFormState.stops.isEmpty()) "Seleccioná las paradas"
                     else "${routeFormState.stops.size} seleccionada(s)",
-                    onCheckClick = {},
+                    onCheckClick = {
+                        getCurrentLocation { location ->
+                            if (location != null) {
+                                val latLng = LatLng(location.latitude, location.longitude)
+                                updateMapCamera(
+                                    target = latLng,
+                                    zoom = 16f
+                                )
+                                viewModel.updateExtremePointFormState(
+                                    RouteFormState.ExtremePointFormState(
+                                        point = latLng,
+                                        useCurrentLocation = true
+                                    )
+                                )
+                            } else {
+                                viewModel.updateExtremePointFormState(
+                                    RouteFormState.ExtremePointFormState(
+                                        point = null,
+                                        useCurrentLocation = false
+                                    )
+                                )
+                            }
+                        }
+                        viewModel.goToStartSelection()
+                    },
                     onAddLocationClick = { viewModel.startNewOptionalLocationMode() }
 
                 )
@@ -567,13 +671,29 @@ fun HomeScreen(viewModel: HomeViewModel) {
             }
             // ==================================================
             // ==================================================
-            // NEW ROUTE MODE -> STAGE 2: Seleccionar Largada y Llegada
+            // NEW ROUTE MODE -> STAGE 2: Seleccionar Largada
             // ==================================================
             // ==================================================
-            if (state.mode == HomeUiState.Mode.NewRoute && routeFormState.stage == RouteFormState.Stage.StartNEndSelection) {
+            if (state.mode == HomeUiState.Mode.NewRoute && routeFormState.stage == RouteFormState.Stage.StartSelection) {
                 BackHandler {
-                    viewModel
+                    viewModel.goBackToStopsSelection()
                 }
+            }
+            AnimatedVisibility(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                visible = state.mode == HomeUiState.Mode.NewRoute && routeFormState.stage == RouteFormState.Stage.StartSelection,
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it })
+            ) {
+                RouteExtremePointeSheet(
+                    title = "Seleccionar Salida",
+                    formState = extremePointFormState,
+                    updateState = viewModel::updateExtremePointFormState,
+                    onDismissRequest = viewModel::goBackToStopsSelection,
+                    processAutoComplete = {},
+                    processSelectSuggestion = {},
+                    submit = {}
+                )
             }
 
         }

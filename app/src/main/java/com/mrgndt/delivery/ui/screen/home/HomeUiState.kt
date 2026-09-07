@@ -38,12 +38,23 @@ data class RouteFormState(
     val stops: List<Location> = emptyList(),
     val stage: Stage = Stage.StopsSelection,
     val stopsSuggestions: List<Location> = emptyList(),
-    val startPoint: Location? = null,
-    val endPoint: Location? = null,
+    val startPoint: LatLng? = null,
+    val endPoint: LatLng? = null,
     val addressSuggestions: List<AddressSuggestion> = emptyList()
 ) {
     enum class Stage {
         StopsSelection,
-        StartNEndSelection,
+        StartSelection,
+        EndSelection,
     }
+
+    data class ExtremePointFormState(
+        val useCurrentLocation: Boolean = true,
+        val point: LatLng? = null,
+        val address: String = "",
+        val addressSuggestions: List<AddressSuggestion> = emptyList(),
+        val stopsSuggestions: List<Location> = emptyList(),
+        val isValid: Boolean = false,
+
+        )
 }

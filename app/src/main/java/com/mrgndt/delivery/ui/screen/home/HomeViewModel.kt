@@ -29,6 +29,9 @@ class HomeViewModel(
     private val _routeFormState = MutableStateFlow(RouteFormState())
     val routeFormState = _routeFormState.asStateFlow()
 
+    private val _extremePointFormState = MutableStateFlow(RouteFormState.ExtremePointFormState())
+    val extremePointFormState = _extremePointFormState.asStateFlow()
+
     init {
         viewModelScope.launch {
             _state.update {
@@ -286,7 +289,40 @@ class HomeViewModel(
                 }.take(10)
             )
         }
+    }
 
+    fun goToStartSelection() {
+        _routeFormState.update {
+            it.copy(
+                stage = RouteFormState.Stage.StartSelection,
+                startPoint = null,
+                endPoint = null,
+            )
+        }
+    }
+
+    fun goBackToStopsSelection() {
+        _routeFormState.update {
+            it.copy(
+                stage = RouteFormState.Stage.StopsSelection,
+                startPoint = null,
+                endPoint = null,
+            )
+        }
+    }
+
+    fun updateExtremePointFormState(state: RouteFormState.ExtremePointFormState) {
+        _extremePointFormState.update {
+            state
+        }
+    }
+
+    fun setExtremePointLatLng(latLng: LatLng) {
+        _extremePointFormState.update {
+            it.copy(
+                point = latLng
+            )
+        }
     }
 
 }

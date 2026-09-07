@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.mrgndt.delivery.R
 import com.mrgndt.delivery.model.Location
 import com.mrgndt.delivery.ui.theme.DeliveryAppTheme
@@ -65,6 +66,7 @@ fun RouteSearchBar(
         },
         expanded = expanded,
         onExpandedChange = { expanded = it },
+        shadowElevation = 16.dp
         ) {
         // Display search results in a scrollable column
         Column(Modifier.verticalScroll(rememberScrollState())) {

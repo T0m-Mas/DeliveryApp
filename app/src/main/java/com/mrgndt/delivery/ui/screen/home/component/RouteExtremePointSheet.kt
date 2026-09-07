@@ -31,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,47 +48,29 @@ import androidx.compose.ui.unit.sp
 import com.google.android.gms.maps.model.LatLng
 import com.mrgndt.delivery.R
 import com.mrgndt.delivery.ui.component.DeliveryAppAutoCompleteTextField
-import com.mrgndt.delivery.ui.component.DeliveryAppTextField
 import com.mrgndt.delivery.ui.component.SelectorItem
 import com.mrgndt.delivery.ui.component.SquareButton
-import com.mrgndt.delivery.ui.screen.home.LocationFormState
+import com.mrgndt.delivery.ui.screen.home.RouteFormState
 import com.mrgndt.delivery.ui.theme.DeliveryAppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LocationSheet(
-    modifier: Modifier = Modifier,
-    locationFormState: LocationFormState,
-    updateState: (LocationFormState) -> Unit,
-    processAutoComplete: (String) -> Unit,
+fun RouteExtremePointeSheet(
+    title: String,
+    formState: RouteFormState.ExtremePointFormState,
+    updateState: (RouteFormState.ExtremePointFormState) -> Unit,
     onDismissRequest: () -> Unit,
+    processAutoComplete: (String) -> Unit,
     processSelectSuggestion: (String) -> Unit,
-    saveLocation: () -> Unit,
+    submit: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-
-    fun resetFormAndDismiss() {
-        updateState(LocationFormState())
-        onDismissRequest()
-    }
 
     val config = LocalConfiguration.current
     val isLandscape = config.orientation == ORIENTATION_LANDSCAPE
     val windowInsets = WindowInsets.safeDrawing.asPaddingValues()
     val layoutDirection = if (config.layoutDirection == LAYOUT_DIRECTION_RTL)
         LayoutDirection.Rtl else LayoutDirection.Ltr
-
-    fun determinateTitle(): String {
-        return if (locationFormState.canBeGhost) "Agregar Lugar"
-        else if (locationFormState.isEditing) "Editar Lugar"
-        else "Registrar Lugar"
-    }
-
-    fun toggleIsGhostLocation() {
-        updateState(
-            locationFormState.copy(isGhostLocation = !locationFormState.isGhostLocation)
-        )
-    }
-
 
     Column(
         modifier = modifier
@@ -131,7 +114,7 @@ fun LocationSheet(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = determinateTitle(),
+                text = title,
                 color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.W600
@@ -139,79 +122,91 @@ fun LocationSheet(
             Icon(
                 modifier = Modifier
                     .size(32.dp)
-                    .clickable { resetFormAndDismiss() },
+                    .clickable { onDismissRequest() },
                 painter = painterResource(R.drawable.ic_close),
                 contentDescription = "Cerrar",
                 tint = MaterialTheme.colorScheme.onBackground
             )
         }
-        if (locationFormState.latLng == null) {
-            DeliveryAppAutoCompleteTextField(
-                value = locationFormState.address,
-                onValueChange = {
+        Row(
+            modifier = modifier.fillMaxWidth().clickable {
+                updateState(
+                    formState.copy(
+                        useCurrentLocation = !formState.useCurrentLocation,
+                        point = null
+                    )
+                )
+            },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Usar ubicación actual",
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            Switch(
+                checked = formState.useCurrentLocation,
+                onCheckedChange = {
                     updateState(
-                        locationFormState.copy(
-                            address = it
+                        formState.copy(
+                            useCurrentLocation = !formState.useCurrentLocation,
+                            point = null
                         )
                     )
-                    processAutoComplete(it)
-                },
-                label = "Ingrese una dirección o toque el mapa",
-                placeholder = "Buscar por dirección",
-                list = locationFormState.addressSuggestions.map { suggestions ->
-                    SelectorItem(label = suggestions.label, value = suggestions.placeId)
-                },
-                singleLine = false,
-
-                onValueSelected = {
-                    processSelectSuggestion(it)
                 }
             )
-        } else {
-            DeliveryAppTextField(
-                value = locationFormState.label,
-                onValueChange = {
-                    updateState(
-                        locationFormState.copy(
-                            label = it
+        }
+
+        if(formState.useCurrentLocation.not()){
+            if(formState.point == null){
+                DeliveryAppAutoCompleteTextField(
+                    value = formState.address,
+                    onValueChange = {
+                        updateState(
+                            formState.copy(
+                                address = it
+                            )
                         )
-                    )
-                },
-                label = "Nombre",
-                placeholder = "Sin Nombre"
-            )
-            DeliveryAppTextField(
-                value = locationFormState.address,
-                onValueChange = {
-                    updateState(
-                        locationFormState.copy(
-                            address = it
-                        )
-                    )
-                },
-                singleLine = false,
-                label = "Dirección",
-                placeholder = "Ingrese una dirección"
-            )
-            if (locationFormState.canBeGhost) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { toggleIsGhostLocation() },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        processAutoComplete(it)
+                    },
+                    label = "Ingrese una dirección o toque el mapa",
+                    placeholder = "Buscar por dirección",
+                    list = formState.addressSuggestions.map { suggestions ->
+                        SelectorItem(label = suggestions.label, value = suggestions.placeId)
+                    },
+                    singleLine = false,
+                    onValueSelected = {
+                        processSelectSuggestion(it)
+                    }
+                )
+            }else{
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Guardar Lugar",
+                        text = "Punto seleccionado en el mapa",
                         color = MaterialTheme.colorScheme.onBackground,
                     )
-                    Switch(
-                        checked = locationFormState.isGhostLocation.not(),
-                        onCheckedChange = { toggleIsGhostLocation() }
-                    )
+                    TextButton(
+                        onClick = {
+                            updateState(
+                                formState.copy(
+                                    point = null
+                                )
+                            )
+                        }
+                    ) {
+                        Text(
+                            text = "Volver a buscar"
+                        )
+                    }
+
                 }
             }
         }
+
+
 
         Spacer(
             modifier = Modifier.weight(1f)
@@ -223,8 +218,8 @@ fun LocationSheet(
         ) {
             SquareButton(
                 modifier = Modifier.weight(1f),
-                onClick = saveLocation,
-                enabled = locationFormState.formIsValid
+                onClick = submit,
+//                enabled = locationFormState.formIsValid
             ) {
                 Text(
                     "Guardar"
@@ -232,7 +227,7 @@ fun LocationSheet(
             }
         }
         BackHandler {
-            resetFormAndDismiss()
+            onDismissRequest()
         }
     }
 
@@ -240,24 +235,27 @@ fun LocationSheet(
 
 @Preview
 @Composable
-fun LocationSheetPreview() {
+fun RouteExtremePointeSheetPreview() {
     DeliveryAppTheme {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Cyan)
         ) {
-            LocationSheet(
+            RouteExtremePointeSheet(
+                title = "Seleccionar Salida",
                 modifier = Modifier.align(Alignment.BottomCenter),
-                locationFormState = LocationFormState(
-                    latLng = LatLng(0.0, 0.0),
-                    canBeGhost = true
+                formState = RouteFormState.ExtremePointFormState(
+                    useCurrentLocation = false,
+                    point = LatLng(
+                        0.0,0.0
+                    )
                 ),
                 updateState = {},
                 onDismissRequest = {},
+                submit = {},
                 processAutoComplete = {},
-                processSelectSuggestion = {},
-                saveLocation = {},
+                processSelectSuggestion = {}
             )
         }
     }
