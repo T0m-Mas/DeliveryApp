@@ -429,11 +429,16 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 //
                 // Pint Start
                 //
-                if (routeFormState.stage == RouteFormState.Stage.StartSelection && extremePointFormState.point != null) {
+                if (
+                    (routeFormState.stage == RouteFormState.Stage.StartSelection && extremePointFormState.point != null) ||
+                    routeFormState.startPoint != null
+                ) {
                     Pin(
                         position = LatLng(
-                            extremePointFormState.point!!.latitude,
-                            extremePointFormState.point!!.longitude
+                            extremePointFormState.point?.latitude
+                                ?: routeFormState.startPoint!!.latitude,
+                            extremePointFormState.point?.longitude
+                                ?: routeFormState.startPoint!!.longitude
                         ),
                         color = PinColor.Primary,
                         type = PinType.Start
@@ -443,11 +448,16 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 //
                 // Pint Stop
                 //
-                if (routeFormState.stage == RouteFormState.Stage.EndSelection && extremePointFormState.point != null) {
+                if (
+                    (routeFormState.stage == RouteFormState.Stage.EndSelection && extremePointFormState.point != null) ||
+                    routeFormState.endPoint != null
+                ) {
                     Pin(
                         position = LatLng(
-                            extremePointFormState.point!!.latitude,
-                            extremePointFormState.point!!.longitude
+                            extremePointFormState.point?.latitude
+                                ?: routeFormState.endPoint!!.latitude,
+                            extremePointFormState.point?.longitude
+                                ?: routeFormState.endPoint!!.longitude
                         ),
                         color = PinColor.Primary,
                         type = PinType.Stop
@@ -591,8 +601,8 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     locationFormState = locationFormState,
                     updateState = { viewModel.updateLocationFormState(it) },
                     onDismissRequest = { viewModel.updateMode(HomeUiState.Mode.Idle) },
-                    processAutoComplete = { viewModel.processAutoComplete(it) },
-                    processSelectSuggestion = { viewModel.processSelectSuggestion(it) },
+                    processAutoComplete = { viewModel.processAutoCompleteForLocationForm(it) },
+                    processSelectSuggestion = { viewModel.processSelectSuggestionForLocationForm(it) },
                     saveLocation = { viewModel.saveLocation() },
                 )
             }
@@ -690,9 +700,36 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     formState = extremePointFormState,
                     updateState = viewModel::updateExtremePointFormState,
                     onDismissRequest = viewModel::goBackToStopsSelection,
-                    processAutoComplete = {},
-                    processSelectSuggestion = {},
-                    submit = {}
+                    processAutoComplete = viewModel::processAutoCompleteForRouteExtremePoint,
+                    processSelectSuggestion = viewModel::processSelectSuggestionForRouteExtremePoint,
+                    submit = viewModel::submitStartPoint
+                )
+            }
+
+            // ==================================================
+            // ==================================================
+            // NEW ROUTE MODE -> STAGE 3: Seleccionar Llegada
+            // ==================================================
+            // ==================================================
+            if (state.mode == HomeUiState.Mode.NewRoute && routeFormState.stage == RouteFormState.Stage.EndSelection) {
+                BackHandler {
+                    viewModel.goBackToStopsSelection()
+                }
+            }
+            AnimatedVisibility(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                visible = state.mode == HomeUiState.Mode.NewRoute && routeFormState.stage == RouteFormState.Stage.EndSelection,
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it })
+            ) {
+                RouteExtremePointeSheet(
+                    title = "Seleccionar LLegada",
+                    formState = extremePointFormState,
+                    updateState = viewModel::updateExtremePointFormState,
+                    onDismissRequest = viewModel::goBackToStopsSelection,
+                    processAutoComplete = viewModel::processAutoCompleteForRouteExtremePoint,
+                    processSelectSuggestion = viewModel::processSelectSuggestionForRouteExtremePoint,
+                    submit = viewModel::submitEndPoint
                 )
             }
 

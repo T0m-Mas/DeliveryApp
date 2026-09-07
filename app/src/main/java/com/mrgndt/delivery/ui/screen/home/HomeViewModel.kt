@@ -91,7 +91,7 @@ class HomeViewModel(
         validateLocationForm()
     }
 
-    fun processAutoComplete(search: String) {
+    fun processAutoCompleteForLocationForm(search: String) {
         viewModelScope.launch {
             try {
                 val response = placesService.autocomplete(search)
@@ -113,7 +113,7 @@ class HomeViewModel(
         }
     }
 
-    fun processSelectSuggestion(placeId: String) {
+    fun processSelectSuggestionForLocationForm(placeId: String) {
         viewModelScope.launch {
             try {
                 val response = placesService.getPlaceDetails(placeId)
@@ -127,7 +127,7 @@ class HomeViewModel(
                 }
                 validateLocationForm()
             } catch (e: Exception) {
-                Log.d("processSelectSuggestion", "$e")
+                Log.d("processSelectSuggestionForLocationForm", "$e")
             }
         }
     }
@@ -311,11 +311,22 @@ class HomeViewModel(
         }
     }
 
+
+    fun validateExtremePointForm() {
+        _extremePointFormState.update {
+            it.copy(
+                isValid = it.point != null
+            )
+        }
+    }
+
     fun updateExtremePointFormState(state: RouteFormState.ExtremePointFormState) {
         _extremePointFormState.update {
             state
         }
+        validateExtremePointForm()
     }
+
 
     fun setExtremePointLatLng(latLng: LatLng) {
         _extremePointFormState.update {
@@ -323,6 +334,78 @@ class HomeViewModel(
                 point = latLng
             )
         }
+        validateExtremePointForm()
     }
+
+    fun processAutoCompleteForRouteExtremePoint(search: String) {
+        viewModelScope.launch {
+            try {
+                val response = placesService.autocomplete(search)
+
+                _extremePointFormState.update {
+                    it.copy(
+                        addressSuggestions = response.suggestions.map { suggestion ->
+                            AddressSuggestion(
+                                label = suggestion.placePrediction.text.text,
+                                placeId = suggestion.placePrediction.placeId
+                            )
+                        }
+                    )
+                }
+
+            } catch (e: Exception) {
+                Log.d("processAutoCompleteForRouteExtremePoint", "$e")
+            }
+        }
+    }
+
+    fun processSelectSuggestionForRouteExtremePoint(placeId: String) {
+        viewModelScope.launch {
+            try {
+                val response = placesService.getPlaceDetails(placeId)
+                _extremePointFormState.update {
+                    it.copy(
+                        point = LatLng(
+                            response.location.latitude,
+                            response.location.longitude,
+                        )
+                    )
+                }
+                validateExtremePointForm()
+            } catch (e: Exception) {
+                Log.d("processSelectSuggestionForRouteExtremePoint", "$e")
+            }
+        }
+    }
+
+    fun submitStartPoint() {
+        if (_extremePointFormState.value.isValid) {
+            _routeFormState.update {
+                it.copy(
+                    startPoint = _extremePointFormState.value.point,
+                    stage = RouteFormState.Stage.EndSelection
+                )
+            }
+            _extremePointFormState.update {
+                RouteFormState.ExtremePointFormState()
+            }
+
+        }
+    }
+
+    fun submitEndPoint() {
+        if (_extremePointFormState.value.isValid) {
+            _routeFormState.update {
+                it.copy(
+                    endPoint = _extremePointFormState.value.point,
+                )
+            }
+            _extremePointFormState.update {
+                RouteFormState.ExtremePointFormState()
+            }
+
+        }
+    }
+
 
 }
