@@ -11,14 +11,16 @@ import com.mrgndt.delivery.DeliveryApplication
 import com.mrgndt.delivery.data.MainRepository
 import com.mrgndt.delivery.model.Location
 import com.mrgndt.delivery.network.service.PlacesService
+import com.mrgndt.delivery.network.service.RoutesService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
-    private val placesService: PlacesService,
     private val mainRepository: MainRepository,
+    private val placesService: PlacesService,
+    private val routesService: RoutesService,
 ) : ViewModel() {
     private val _state = MutableStateFlow(HomeUiState())
     val state = _state.asStateFlow()
@@ -48,8 +50,9 @@ class HomeViewModel(
                 val application =
                     (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as DeliveryApplication)
                 HomeViewModel(
+                    mainRepository = application.mainRepository,
                     placesService = application.placesService,
-                    mainRepository = application.mainRepository
+                    routesService = application.routesService
                 )
             }
         }
@@ -398,6 +401,7 @@ class HomeViewModel(
 
     fun submitEndPoint() {
         if (_extremePointFormState.value.isValid) {
+
             _routeFormState.update {
                 it.copy(
                     endPoint = _extremePointFormState.value.point,
@@ -405,6 +409,18 @@ class HomeViewModel(
             }
             _extremePointFormState.update {
                 RouteFormState.ExtremePointFormState()
+            }
+            viewModelScope.launch {
+                try {
+                    val response = routesService.computeRoute(
+                        startPoint = _routeFormState.value.startPoint!!,
+                        endPoint = _routeFormState.value.endPoint!!,
+                        stops = _routeFormState.value.stops
+                    )
+                    Log.d("submitEndPoint", "response: $response")
+                } catch (e: Exception) {
+                    Log.d("submitEndPoint", "error: $e")
+                }
             }
 
         }

@@ -60,6 +60,7 @@ import com.mrgndt.delivery.ui.theme.DeliveryAppTheme
 @Composable
 fun RouteExtremePointeSheet(
     title: String,
+    buttonText: String,
     formState: RouteFormState.ExtremePointFormState,
     updateState: (RouteFormState.ExtremePointFormState) -> Unit,
     onDismissRequest: () -> Unit,
@@ -213,7 +214,7 @@ fun RouteExtremePointeSheet(
                 enabled = formState.isValid
             ) {
                 Text(
-                    "Guardar"
+                    buttonText
                 )
             }
         }
@@ -235,6 +236,7 @@ fun RouteExtremePointeSheetPreview() {
         ) {
             RouteExtremePointeSheet(
                 title = "Seleccionar Salida",
+                buttonText = "Continuar",
                 modifier = Modifier.align(Alignment.BottomCenter),
                 formState = RouteFormState.ExtremePointFormState(
                     point = null

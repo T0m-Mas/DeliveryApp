@@ -32,8 +32,8 @@ class PlacesService(
         .baseUrl(apiUrl)
         .build()
 
-    private val retrofitService: ApiServiceInterfaceInterface by lazy {
-        retrofit.create(ApiServiceInterfaceInterface::class.java)
+    private val retrofitService: PlacesServiceInterface by lazy {
+        retrofit.create(PlacesServiceInterface::class.java)
     }
 
     suspend fun autocomplete(
@@ -59,7 +59,7 @@ class PlacesService(
 
 }
 
-interface ApiServiceInterfaceInterface {
+interface PlacesServiceInterface {
     @POST("v1/places:autocomplete")
     suspend fun autocomplete(@Body body: AutoCompleteBody): AutoCompleteResponse
 

@@ -3,6 +3,30 @@ package com.mrgndt.delivery.network.data
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class ComputeRouteBody(
+    val origin: Point,
+    val intermediates: List<Point>,
+    val destination: Point,
+    val travelMode: String = "DRIVE",
+    val optimizeWaypointOrder: Boolean = true
+)
+
+@Serializable
+data class Point(
+    val location: Location
+) {
+    constructor(latitude: Double, longitude: Double) : this(
+        location = Location(latLng = LatLng(latitude, longitude))
+    )
+}
+
+///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////
+// ComputeRouteResponse
+///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////
+
+@Serializable
 data class ComputeRouteResponse(
     val routes: List<Route>
 )
@@ -29,8 +53,8 @@ data class Leg(
     val duration: String,
     val staticDuration: String,
     val polyline: Polyline,
-    val startLocation: StartLocation,
-    val endLocation: EndLocation,
+    val startLocation: Location,
+    val endLocation: Location,
     val steps: List<Step>,
     val localizedValues: LocalizedValues,
 )
@@ -41,7 +65,7 @@ data class Polyline(
 )
 
 @Serializable
-data class StartLocation(
+data class Location(
     val latLng: LatLng,
 )
 
@@ -52,17 +76,12 @@ data class LatLng(
 )
 
 @Serializable
-data class EndLocation(
-    val latLng: LatLng,
-)
-
-@Serializable
 data class Step(
     val distanceMeters: Long,
     val staticDuration: String,
     val polyline: Polyline,
-    val startLocation: StartLocation,
-    val endLocation: EndLocation,
+    val startLocation: Location,
+    val endLocation: Location,
     val navigationInstruction: NavigationInstruction,
     val localizedValues: LocalizedValues,
     val travelMode: String,

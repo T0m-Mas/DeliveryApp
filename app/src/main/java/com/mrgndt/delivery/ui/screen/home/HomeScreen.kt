@@ -564,6 +564,36 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     )
                 }
             }
+            AnimatedVisibility(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd),
+                visible = shouldShowMenuButton(),
+                enter = slideInHorizontally(initialOffsetX = { it }),
+                exit = slideOutHorizontally(targetOffsetX = { it })
+            ) {
+                FloatingActionButton(
+                    modifier = Modifier
+                        .safeDrawingPadding()
+                        .padding(16.dp),
+                    onClick = {
+                        getCurrentLocation {
+                            if (it !== null)
+                                updateMapCamera(
+                                    target = LatLng(
+                                        it.latitude,
+                                        it.longitude,
+                                    ),
+                                    zoom = 16f
+                                )
+                        }
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_my_location),
+                        contentDescription = "Ir a Ubicación Actual"
+                    )
+                }
+            }
             // ==================================================
             // ==================================================
             // LOCATION SELECTED PSEUDO MODE
@@ -718,6 +748,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
             ) {
                 RouteExtremePointeSheet(
                     title = "Seleccionar Salida",
+                    buttonText = "Continuar",
                     formState = extremePointFormState,
                     updateState = viewModel::updateExtremePointFormState,
                     onDismissRequest = viewModel::goBackToStopsSelection,
@@ -746,6 +777,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
             ) {
                 RouteExtremePointeSheet(
                     title = "Seleccionar LLegada",
+                    buttonText = "Empezar Recorrido",
                     formState = extremePointFormState,
                     updateState = viewModel::updateExtremePointFormState,
                     onDismissRequest = viewModel::goBackToStopsSelection,
