@@ -265,7 +265,11 @@ fun HomeScreen(viewModel: HomeViewModel) {
         )
     }
 
-    LaunchedEffect(locationFormState.latLng, state.selectedLocation) {
+    LaunchedEffect(
+        locationFormState.latLng,
+        state.selectedLocation,
+        extremePointFormState.point,
+    ) {
         if (locationFormState.latLng != null) {
             updateMapCamera(
                 locationFormState.latLng!!,
@@ -277,6 +281,15 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 LatLng(
                     state.selectedLocation!!.latitude,
                     state.selectedLocation!!.longitude,
+                ),
+                if (mapCameraPositionState.position.zoom >= 16f)
+                    mapCameraPositionState.position.zoom else 16f
+            )
+        } else if (extremePointFormState.point != null) {
+            updateMapCamera(
+                LatLng(
+                    extremePointFormState.point!!.latitude,
+                    extremePointFormState.point!!.longitude,
                 ),
                 if (mapCameraPositionState.position.zoom >= 16f)
                     mapCameraPositionState.position.zoom else 16f
@@ -369,6 +382,29 @@ fun HomeScreen(viewModel: HomeViewModel) {
         return true
     }
 
+    fun setExtremePointToMyLocation() {
+        getCurrentLocation { location ->
+            if (location != null) {
+                val latLng = LatLng(location.latitude, location.longitude)
+                updateMapCamera(
+                    target = latLng,
+                    zoom = 16f
+                )
+                viewModel.updateExtremePointFormState(
+                    RouteFormState.ExtremePointFormState(
+                        point = latLng,
+                    )
+                )
+            } else {
+                Toast.makeText(
+                    context,
+                    "No se pudo determinar la ubicación actual",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = false,
@@ -426,19 +462,34 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     )
                 }
 
+
                 //
-                // Pint Start
+                // Pins de ExtremePointForm
                 //
                 if (
-                    (routeFormState.stage == RouteFormState.Stage.StartSelection && extremePointFormState.point != null) ||
+                    extremePointFormState.point != null
+                ) {
+                    Pin(
+                        position = LatLng(
+                            extremePointFormState.point!!.latitude,
+                            extremePointFormState.point!!.longitude
+                        ),
+                        color = PinColor.Primary,
+                        type = if (routeFormState.startPoint != null) PinType.Stop else PinType.Start
+                    )
+                }
+
+
+                //
+                // Pin Start
+                //
+                if (
                     routeFormState.startPoint != null
                 ) {
                     Pin(
                         position = LatLng(
-                            extremePointFormState.point?.latitude
-                                ?: routeFormState.startPoint!!.latitude,
-                            extremePointFormState.point?.longitude
-                                ?: routeFormState.startPoint!!.longitude
+                            routeFormState.startPoint!!.latitude,
+                            routeFormState.startPoint!!.longitude
                         ),
                         color = PinColor.Primary,
                         type = PinType.Start
@@ -446,18 +497,15 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 }
 
                 //
-                // Pint Stop
+                // Pin Stop
                 //
                 if (
-                    (routeFormState.stage == RouteFormState.Stage.EndSelection && extremePointFormState.point != null) ||
                     routeFormState.endPoint != null
                 ) {
                     Pin(
                         position = LatLng(
-                            extremePointFormState.point?.latitude
-                                ?: routeFormState.endPoint!!.latitude,
-                            extremePointFormState.point?.longitude
-                                ?: routeFormState.endPoint!!.longitude
+                            routeFormState.endPoint!!.latitude,
+                            routeFormState.endPoint!!.longitude
                         ),
                         color = PinColor.Primary,
                         type = PinType.Stop
@@ -626,33 +674,8 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 RouteBottomFABsNText(
                     text = if (routeFormState.stops.isEmpty()) "Seleccioná las paradas"
                     else "${routeFormState.stops.size} seleccionada(s)",
-                    onCheckClick = {
-                        getCurrentLocation { location ->
-                            if (location != null) {
-                                val latLng = LatLng(location.latitude, location.longitude)
-                                updateMapCamera(
-                                    target = latLng,
-                                    zoom = 16f
-                                )
-                                viewModel.updateExtremePointFormState(
-                                    RouteFormState.ExtremePointFormState(
-                                        point = latLng,
-                                        useCurrentLocation = true
-                                    )
-                                )
-                            } else {
-                                viewModel.updateExtremePointFormState(
-                                    RouteFormState.ExtremePointFormState(
-                                        point = null,
-                                        useCurrentLocation = false
-                                    )
-                                )
-                            }
-                        }
-                        viewModel.goToStartSelection()
-                    },
-                    onAddLocationClick = { viewModel.startNewOptionalLocationMode() }
-
+                    onCheckClick = viewModel::goToStartSelection,
+                    onAddLocationClick = viewModel::startNewOptionalLocationMode
                 )
             }
             AnimatedVisibility(
@@ -662,9 +685,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 exit = slideOutVertically(targetOffsetY = { -it })
             ) {
                 RouteSearchBar(
-                    onSearch = {
-                        viewModel.suggestLocations(it)
-                    },
+                    onSearch = viewModel::suggestLocations,
                     suggestions = routeFormState.stopsSuggestions,
                     onSuggestionClick = {
                         toggleSelectStop(it)
@@ -690,7 +711,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 }
             }
             AnimatedVisibility(
-                modifier = Modifier.align(Alignment.BottomCenter),
+                modifier = Modifier.align(Alignment.BottomStart),
                 visible = state.mode == HomeUiState.Mode.NewRoute && routeFormState.stage == RouteFormState.Stage.StartSelection,
                 enter = slideInVertically(initialOffsetY = { it }),
                 exit = slideOutVertically(targetOffsetY = { it })
@@ -702,7 +723,8 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     onDismissRequest = viewModel::goBackToStopsSelection,
                     processAutoComplete = viewModel::processAutoCompleteForRouteExtremePoint,
                     processSelectSuggestion = viewModel::processSelectSuggestionForRouteExtremePoint,
-                    submit = viewModel::submitStartPoint
+                    useMyLocationClick = ::setExtremePointToMyLocation,
+                    submit = viewModel::submitStartPoint,
                 )
             }
 
@@ -717,7 +739,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 }
             }
             AnimatedVisibility(
-                modifier = Modifier.align(Alignment.BottomCenter),
+                modifier = Modifier.align(Alignment.BottomStart),
                 visible = state.mode == HomeUiState.Mode.NewRoute && routeFormState.stage == RouteFormState.Stage.EndSelection,
                 enter = slideInVertically(initialOffsetY = { it }),
                 exit = slideOutVertically(targetOffsetY = { it })
@@ -729,6 +751,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     onDismissRequest = viewModel::goBackToStopsSelection,
                     processAutoComplete = viewModel::processAutoCompleteForRouteExtremePoint,
                     processSelectSuggestion = viewModel::processSelectSuggestionForRouteExtremePoint,
+                    useMyLocationClick = ::setExtremePointToMyLocation,
                     submit = viewModel::submitEndPoint
                 )
             }

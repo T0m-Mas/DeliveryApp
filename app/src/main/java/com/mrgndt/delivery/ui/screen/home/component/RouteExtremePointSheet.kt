@@ -23,9 +23,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -62,6 +65,7 @@ fun RouteExtremePointeSheet(
     onDismissRequest: () -> Unit,
     processAutoComplete: (String) -> Unit,
     processSelectSuggestion: (String) -> Unit,
+    useMyLocationClick: () -> Unit,
     submit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -128,83 +132,70 @@ fun RouteExtremePointeSheet(
                 tint = MaterialTheme.colorScheme.onBackground
             )
         }
-        Row(
-            modifier = modifier.fillMaxWidth().clickable {
-                updateState(
-                    formState.copy(
-                        useCurrentLocation = !formState.useCurrentLocation,
-                        point = null
-                    )
-                )
-            },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "Usar ubicación actual",
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Switch(
-                checked = formState.useCurrentLocation,
-                onCheckedChange = {
+
+        if(formState.point == null){
+            DeliveryAppAutoCompleteTextField(
+                value = formState.address,
+                onValueChange = {
                     updateState(
                         formState.copy(
-                            useCurrentLocation = !formState.useCurrentLocation,
-                            point = null
+                            address = it
                         )
                     )
+                    processAutoComplete(it)
+                },
+                label = "Ingrese una dirección o toque el mapa",
+                placeholder = "Buscar por dirección",
+                list = formState.addressSuggestions.map { suggestions ->
+                    SelectorItem(label = suggestions.label, value = suggestions.placeId)
+                },
+                singleLine = false,
+                onValueSelected = {
+                    processSelectSuggestion(it)
                 }
             )
-        }
-
-        if(formState.useCurrentLocation.not()){
-            if(formState.point == null){
-                DeliveryAppAutoCompleteTextField(
-                    value = formState.address,
-                    onValueChange = {
+            SquareButton(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = useMyLocationClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary,
+                )
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_my_location),
+                    contentDescription = null
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Utilizar Ubicación Actual"
+                )
+            }
+        }else{
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Punto seleccionado en el mapa",
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                TextButton(
+                    onClick = {
                         updateState(
                             formState.copy(
-                                address = it
+                                point = null
                             )
                         )
-                        processAutoComplete(it)
-                    },
-                    label = "Ingrese una dirección o toque el mapa",
-                    placeholder = "Buscar por dirección",
-                    list = formState.addressSuggestions.map { suggestions ->
-                        SelectorItem(label = suggestions.label, value = suggestions.placeId)
-                    },
-                    singleLine = false,
-                    onValueSelected = {
-                        processSelectSuggestion(it)
                     }
-                )
-            }else{
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Punto seleccionado en el mapa",
-                        color = MaterialTheme.colorScheme.onBackground,
+                        text = "Volver a buscar"
                     )
-                    TextButton(
-                        onClick = {
-                            updateState(
-                                formState.copy(
-                                    point = null
-                                )
-                            )
-                        }
-                    ) {
-                        Text(
-                            text = "Volver a buscar"
-                        )
-                    }
-
                 }
             }
         }
+
 
 
 
@@ -219,7 +210,7 @@ fun RouteExtremePointeSheet(
             SquareButton(
                 modifier = Modifier.weight(1f),
                 onClick = submit,
-//                enabled = locationFormState.formIsValid
+                enabled = formState.isValid
             ) {
                 Text(
                     "Guardar"
@@ -246,16 +237,14 @@ fun RouteExtremePointeSheetPreview() {
                 title = "Seleccionar Salida",
                 modifier = Modifier.align(Alignment.BottomCenter),
                 formState = RouteFormState.ExtremePointFormState(
-                    useCurrentLocation = false,
-                    point = LatLng(
-                        0.0,0.0
-                    )
+                    point = null
                 ),
                 updateState = {},
                 onDismissRequest = {},
                 submit = {},
                 processAutoComplete = {},
-                processSelectSuggestion = {}
+                processSelectSuggestion = {},
+                useMyLocationClick = {}
             )
         }
     }

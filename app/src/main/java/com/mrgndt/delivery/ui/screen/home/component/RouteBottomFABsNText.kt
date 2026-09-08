@@ -37,6 +37,7 @@ fun RouteBottomFABsNText(
             .safeDrawingPadding()
             .padding(16.dp)
             .padding(bottom = 16.dp)
+            .padding(horizontal = 6.dp)
             .then(modifier),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Bottom,

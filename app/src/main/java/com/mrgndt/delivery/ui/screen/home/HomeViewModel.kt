@@ -302,6 +302,9 @@ class HomeViewModel(
     }
 
     fun goBackToStopsSelection() {
+        _extremePointFormState.update {
+            RouteFormState.ExtremePointFormState()
+        }
         _routeFormState.update {
             it.copy(
                 stage = RouteFormState.Stage.StopsSelection,

@@ -49,7 +49,6 @@ data class RouteFormState(
     }
 
     data class ExtremePointFormState(
-        val useCurrentLocation: Boolean = true,
         val point: LatLng? = null,
         val address: String = "",
         val addressSuggestions: List<AddressSuggestion> = emptyList(),
