@@ -57,7 +57,9 @@ class RoutesService(
 
 interface RoutesServiceInterface {
     @POST("directions/v2:computeRoutes")
-    @Headers("X-Goog-FieldMask: *")
+    @Headers(
+        "X-Goog-FieldMask: routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline,routes.optimized_intermediate_waypoint_index"
+    )
     suspend fun computeRoute(@Body body: ComputeRouteBody): ComputeRouteResponse
 
 

@@ -34,6 +34,9 @@ class HomeViewModel(
     private val _extremePointFormState = MutableStateFlow(RouteFormState.ExtremePointFormState())
     val extremePointFormState = _extremePointFormState.asStateFlow()
 
+    private val _routeState = MutableStateFlow(RouteState())
+    val routeState = _routeState.asStateFlow()
+
     init {
         viewModelScope.launch {
             _state.update {
@@ -410,6 +413,9 @@ class HomeViewModel(
             _extremePointFormState.update {
                 RouteFormState.ExtremePointFormState()
             }
+            _routeState.update {
+                it.copy(isLoading = true)
+            }
             viewModelScope.launch {
                 try {
                     val response = routesService.computeRoute(
@@ -417,8 +423,37 @@ class HomeViewModel(
                         endPoint = _routeFormState.value.endPoint!!,
                         stops = _routeFormState.value.stops
                     )
+
+                    val route = if (response.routes.isEmpty()) null else response.routes[0]
+
+                    if (route != null) {
+                        _routeState.update {
+                            RouteState(
+                                encodedPolyline = route.polyline.encodedPolyline,
+                                distanceMeters = route.distanceMeters,
+                                duration = route.duration,
+                                isLoading = false,
+                            )
+                        }
+                        _state.update {
+                            it.copy(
+                                mode = HomeUiState.Mode.Route
+                            )
+                        }
+
+                    }
+
+
+
                     Log.d("submitEndPoint", "response: $response")
                 } catch (e: Exception) {
+                    _routeState.update {
+                        RouteState(
+                            isLoading = false,
+                            error = e.message
+                        )
+                    }
+
                     Log.d("submitEndPoint", "error: $e")
                 }
             }

@@ -57,3 +57,11 @@ data class RouteFormState(
 
         )
 }
+
+data class RouteState(
+    val encodedPolyline: String? = null,
+    val distanceMeters: Long? = null,
+    val duration: String? = null,
+    val isLoading: Boolean = false,
+    val error: String? = null,
+)
